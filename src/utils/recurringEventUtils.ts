@@ -80,41 +80,8 @@ export function getNextOccurrence(currentDate: Date, repeatType: RepeatType): Da
       return next;
     }
 
-    case 'monthly': {
-      const originalDay = currentDate.getDate();
-      const maxDate = new Date(MAX_DATE);
-      let next = new Date(currentDate);
-
-      // 다음 유효한 날짜를 찾을 때까지 반복
-      while (true) {
-        // 다음 달로 이동
-        const currentMonth = next.getMonth();
-        const currentYear = next.getFullYear();
-
-        // 다음 달의 같은 날짜로 설정 시도
-        next.setMonth(currentMonth + 1);
-        next.setDate(originalDay);
-
-        // 월이 예상보다 더 증가했다면 (날짜가 overflow되어 다음 달로 넘어감)
-        // 예: 2월 31일 → 3월 3일이 되면 month가 2가 아니라 3이 됨
-        const expectedMonth = (currentMonth + 1) % 12;
-        if (next.getMonth() !== expectedMonth) {
-          // 의도한 달로 돌아가서 다시 시도
-          next = new Date(currentYear, currentMonth + 1, 1);
-          continue;
-        }
-
-        // MAX_DATE 초과하면 null 반환
-        if (next > maxDate) {
-          return null;
-        }
-
-        // 날짜가 일치하면 반환
-        if (next.getDate() === originalDay) {
-          return next;
-        }
-      }
-    }
+    case 'monthly':
+      return getNextMonthlyOccurrence(currentDate);
 
     case 'yearly': {
       const next = new Date(currentDate);
@@ -124,6 +91,50 @@ export function getNextOccurrence(currentDate: Date, repeatType: RepeatType): Da
 
     default:
       return null;
+  }
+}
+
+/**
+ * 매월 반복의 다음 발생 날짜를 계산
+ *
+ * 31일과 같이 일부 달에 없는 날짜의 경우, 해당 날짜가 있는 다음 달을 찾아 반환합니다.
+ * 예: 1월 31일 → 2월 건너뜀 → 3월 31일
+ *
+ * @param currentDate - 현재 날짜
+ * @returns 다음 유효한 매월 반복 날짜 또는 null (MAX_DATE 초과 시)
+ */
+function getNextMonthlyOccurrence(currentDate: Date): Date | null {
+  const originalDay = currentDate.getDate();
+  const maxDate = new Date(MAX_DATE);
+  let next = new Date(currentDate);
+
+  // 다음 유효한 날짜를 찾을 때까지 반복
+  while (true) {
+    const currentMonth = next.getMonth();
+    const currentYear = next.getFullYear();
+
+    // 다음 달로 이동하고 원래 날짜로 설정 시도
+    next.setMonth(currentMonth + 1);
+    next.setDate(originalDay);
+
+    // 날짜 overflow 감지: 월이 예상보다 더 증가한 경우
+    // 예: 1월 31일 → 2월 31일 시도 → 3월 3일로 overflow
+    const expectedMonth = (currentMonth + 1) % 12;
+    if (next.getMonth() !== expectedMonth) {
+      // overflow 발생 시: 의도한 달의 1일로 리셋하고 다음 달 시도
+      next = new Date(currentYear, currentMonth + 1, 1);
+      continue;
+    }
+
+    // MAX_DATE 초과 시 null 반환
+    if (next > maxDate) {
+      return null;
+    }
+
+    // 날짜가 원래 날짜와 일치하면 유효한 날짜 반환
+    if (next.getDate() === originalDay) {
+      return next;
+    }
   }
 }
 
