@@ -1,0 +1,252 @@
+# 🎯 반복 일정 관리 기능 개발 진행 상황
+
+마지막 업데이트: 2025-10-30
+
+---
+
+## Phase 1: 기초 인프라 구축 (P0)
+
+### 반복 일정 생성 로직
+
+- [ ] 001: 반복 일정 생성 유틸 함수 기본 구조
+  - 복잡도: 3/5
+  - 예상: 1-2시간
+  - 파일: `src/utils/recurringEventUtils.ts` (신규)
+  - 설명: `generateRecurringEvents()` 함수 작성. 매일/매주/매월/매년 반복 로직 구현
+
+- [ ] 002: 31일 매월 반복 엣지 케이스 처리
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/utils/recurringEventUtils.ts`
+  - 설명: 31일이 없는 달(2월, 4월, 6월, 9월, 11월)을 건너뛰는 로직
+
+- [ ] 003: 윤년 2월 29일 매년 반복 엣지 케이스 처리
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/utils/recurringEventUtils.ts`
+  - 설명: 평년에는 2월 29일을 건너뛰는 로직
+
+- [ ] 004: 반복 종료일 및 2025-12-31 제한 로직
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/utils/recurringEventUtils.ts`
+  - 설명: 종료일과 최대 날짜(2025-12-31) 중 더 이른 날짜까지만 생성
+
+---
+
+## Phase 2: UI 활성화 (P0)
+
+### 반복 설정 UI
+
+- [ ] 005: 반복 설정 UI 주석 해제 및 활성화
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/App.tsx` (라인 441-478)
+  - 설명: 주석 처리된 반복 설정 UI 활성화, setRepeatType/setRepeatInterval/setRepeatEndDate 주석 해제
+
+- [ ] 006: 반복 종료일 validation 추가
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/hooks/useEventForm.ts`
+  - 설명: 종료일이 시작일보다 이후인지, 2025-12-31 이하인지 검증
+
+- [ ] 007: 반복 종료일 max 속성 및 에러 메시지
+  - 복잡도: 1/5
+  - 예상: ~30분
+  - 파일: `src/App.tsx`
+  - 설명: TextField에 `max="2025-12-31"` 속성 추가, error/helperText 표시
+
+---
+
+## Phase 3: 반복 일정 생성 통합 (P0)
+
+### 저장 로직 수정
+
+- [ ] 008: saveEvent에 반복 생성 로직 통합
+  - 복잡도: 3/5
+  - 예상: 1-2시간
+  - 파일: `src/hooks/useEventOperations.ts`
+  - 설명: repeat.type !== 'none'이면 generateRecurringEvents() 호출하여 여러 이벤트 생성
+
+- [ ] 009: repeatParentId 생성 및 할당
+  - 복잡도: 1/5
+  - 예상: ~30분
+  - 파일: `src/hooks/useEventOperations.ts`
+  - 설명: 반복 일정 생성 시 UUID 또는 timestamp로 repeatParentId 생성, 모든 인스턴스에 할당
+
+---
+
+## Phase 4: 반복 아이콘 표시 (P0)
+
+### UI 개선
+
+- [ ] 010: 주간/월간 뷰에 반복 아이콘 추가
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/App.tsx` (`renderWeekView`, `renderMonthView`)
+  - 설명: `@mui/icons-material/Repeat` 아이콘 import, repeat.type !== 'none'이면 아이콘 표시
+
+- [ ] 011: 이벤트 리스트에 반복 아이콘 추가
+  - 복잡도: 1/5
+  - 예상: ~30분
+  - 파일: `src/App.tsx` (라인 538-589)
+  - 설명: 이벤트 리스트에도 동일하게 반복 아이콘 표시
+
+---
+
+## Phase 5: 반복 일정 수정 (P0)
+
+### 수정 기능
+
+- [ ] 012: 반복 일정 수정 확인 다이얼로그 UI
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/App.tsx`
+  - 설명: "해당 일정만 수정하시겠어요?" 다이얼로그 추가 (예/아니오 버튼)
+
+- [ ] 013: 단일 수정 로직 구현
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/hooks/useEventOperations.ts`
+  - 설명: 단일 수정 시 repeat.type = 'none'으로 변경하여 저장
+
+- [ ] 014: 전체 수정 로직 구현
+  - 복잡도: 3/5
+  - 예상: 1-2시간
+  - 파일: `src/hooks/useEventOperations.ts`
+  - 설명: 같은 repeatParentId를 가진 모든 이벤트를 찾아 일괄 수정 (날짜는 개별 유지)
+
+---
+
+## Phase 6: 반복 일정 삭제 (P0)
+
+### 삭제 기능
+
+- [ ] 015: 반복 일정 삭제 확인 다이얼로그 UI
+  - 복잡도: 2/5
+  - 예상: ~1시간
+  - 파일: `src/App.tsx`
+  - 설명: "해당 일정만 삭제하시겠어요?" 다이얼로그 추가 (예/아니오/취소 버튼)
+
+- [ ] 016: 단일 삭제 로직 구현
+  - 복잡도: 1/5
+  - 예상: ~30분
+  - 파일: `src/hooks/useEventOperations.ts`
+  - 설명: 단일 삭제는 기존 deleteEvent 로직 활용
+
+- [ ] 017: 전체 삭제 로직 구현
+  - 복잡도: 3/5
+  - 예상: 1-2시간
+  - 파일: `src/hooks/useEventOperations.ts`
+  - 설명: 같은 repeatParentId를 가진 모든 이벤트를 찾아 일괄 삭제 (Promise.all 활용)
+
+---
+
+## 📝 개발 노트
+
+### 2025-10-30
+
+- 프로젝트 시작
+- Phase 0 완료: Epic, Stories, TODO.md 작성
+- 작업 분할 완료 (총 17개 작업)
+
+### 다음 작업
+
+- [ ] 인간 검토 대기
+- [ ] 승인 후 작업 001 시작 (Phase 1: 명세 작성)
+
+---
+
+## 📊 통계
+
+- **전체**: 0/17
+- **완료**: 0 ✅
+- **진행중**: 0 🔄
+- **대기**: 17 ⏳
+
+---
+
+## 🎯 작업 순서 및 의존성
+
+```
+001 (반복 생성 유틸) → 002 (31일) → 003 (윤년) → 004 (종료일)
+                       ↓
+005 (UI 활성화) → 006 (validation) → 007 (max 속성)
+                       ↓
+008 (saveEvent 통합) → 009 (repeatParentId)
+                       ↓
+010 (주간/월간 뷰 아이콘) → 011 (리스트 아이콘)
+                       ↓
+012 (수정 다이얼로그) → 013 (단일 수정) → 014 (전체 수정)
+                       ↓
+015 (삭제 다이얼로그) → 016 (단일 삭제) → 017 (전체 삭제)
+```
+
+**병렬 가능**:
+- 001-004 (유틸 함수) 와 005-007 (UI) 는 독립적 (병렬 가능)
+- 008-009 완료 후 010-011, 012-014, 015-017 순차 진행
+
+---
+
+## 💡 참고사항
+
+### 제약사항
+
+- **31일 매월 반복**: 31일이 없는 달(2월, 4월, 6월, 9월, 11월) 건너뛰기
+- **윤년 2월 29일 매년 반복**: 평년(2025, 2026, 2027...) 건너뛰기
+- **최대 날짜**: 2025-12-31까지만 생성
+- **반복 일정 겹침**: 반복 일정끼리는 겹침 검사하지 않음
+
+### 기존 코드 활용
+
+- `src/types.ts`: RepeatInfo, Event 타입 이미 정의됨
+- `src/App.tsx` 라인 441-478: 반복 UI 주석 처리됨 (활성화 필요)
+- `src/hooks/useEventForm.ts`: 반복 관련 state 존재
+
+### 서버 API
+
+- `POST /api/events`: 이벤트 생성
+- `PUT /api/events/:id`: 이벤트 수정
+- `DELETE /api/events/:id`: 이벤트 삭제
+- `GET /api/events`: 이벤트 목록 조회
+
+**중요**: 반복 일정은 클라이언트에서 개별 이벤트로 생성하여 서버에 저장. 서버는 반복 로직을 모름.
+
+### 데이터 구조
+
+```typescript
+// 이미 정의된 타입
+type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+interface RepeatInfo {
+  type: RepeatType;
+  interval: number;
+  endDate?: string;
+  id?: string;
+}
+
+interface Event extends EventForm {
+  id: string;
+  repeatParentId?: string; // 반복 그룹 추적용
+}
+```
+
+### TDD 워크플로우
+
+각 작업은 다음 순서로 진행:
+1. **Phase 1**: 명세 작성 (@spec-designer)
+2. **Phase 2**: 테스트 설계 (@test-designer)
+3. **Phase 3**: RED - 테스트 작성 (@test-coder)
+4. **Phase 4**: GREEN - 기능 구현 (@developer)
+5. **Phase 5**: REFACTOR - 리팩토링 (@refactorer)
+
+각 단계마다 인간 검토 필요.
+
+---
+
+## 🚀 다음 단계
+
+1. **현재**: Phase 0 완료, 인간 검토 대기
+2. **승인 후**: 작업 001 시작 → @spec-designer에게 명세 작성 요청
+3. **TDD 사이클**: RED → GREEN → REFACTOR
+4. **커밋**: 각 Phase별로 커밋 (총 3개 커밋/작업)
