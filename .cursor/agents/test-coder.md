@@ -33,7 +33,7 @@
 
 ```typescript
 // 구현 파일이 아예 없는 상태에서 테스트 작성
-import { myFunction } from './myModule';  // ❌ Cannot find module
+import { myFunction } from './myModule'; // ❌ Cannot find module
 
 describe('myFunction', () => {
   it('should work', () => {
@@ -59,7 +59,7 @@ export function myFunction(input: string): string {
 
 // 2단계: 그 다음 테스트 작성
 // src/__tests__/myModule.spec.ts
-import { myFunction } from '../utils/myModule';  // ✅ Import 성공!
+import { myFunction } from '../utils/myModule'; // ✅ Import 성공!
 
 describe('myFunction', () => {
   it('should return uppercase', () => {
@@ -188,7 +188,102 @@ it('테스트 설명', () => {
 });
 ```
 
-### 2. RTL 쿼리 우선순위
+### 2. 배열 결과 검증 방법
+
+**원칙: "What, not How" - 무엇을 검증할지, 어떻게가 아님**
+
+**❌ 피해야 할 방식: 인덱스별 개별 체크**
+
+```typescript
+// ❌ 나쁜 예 - 깨지기 쉽고 반복적
+it('매월 30일에 반복된다', () => {
+  const result = generateMonthlyEvents(baseEvent);
+  
+  expect(result[0].date).toBe('2025-01-30');
+  expect(result[1].date).toBe('2025-03-30');
+  expect(result[2].date).toBe('2025-04-30');
+  expect(result[3].date).toBe('2025-05-30');
+  expect(result[4].date).toBe('2025-06-30');
+  // ... 6줄 더
+  
+  // 문제점:
+  // - 중간값 하나하나 체크 = 반복적, 의도 불명확
+  // - 개수 변경 시 모두 수정 필요
+  // - 진짜 검증하려는 것이 뭔지 불명확
+});
+```
+
+**✅ 권장 방식: 패턴 검증**
+
+```typescript
+// ✅ 좋은 예 - 패턴으로 검증
+it('매월 30일에 반복되고 30일이 없는 달은 건너뛴다', () => {
+  const result = generateMonthlyEvents(baseEvent);
+  
+  // 1. 개수 확인
+  expect(result).toHaveLength(11); // 2월 제외
+  
+  // 2. 패턴 확인 - 모든 날짜가 30일인지
+  result.forEach(event => {
+    const day = event.date.split('-')[2];
+    expect(day).toBe('30');
+  });
+  
+  // 3. 제외 확인 - 2월이 없는지
+  const months = result.map(e => e.date.split('-')[1]);
+  expect(months).not.toContain('02');
+  
+  // 4. 경계값만 확인 (필요시)
+  expect(result[0].date).toBe('2025-01-30'); // 첫 번째
+  expect(result[result.length - 1].date).toBe('2025-12-30'); // 마지막
+});
+```
+
+**패턴별 검증 전략:**
+
+```typescript
+// 전략 1: forEach로 모든 요소 공통 패턴 확인
+result.forEach(item => {
+  expect(item.someProperty).toBe(expectedValue);
+});
+
+// 전략 2: map으로 추출 후 포함/제외 확인
+const ids = result.map(item => item.id);
+expect(ids).toContain('expected-id');
+expect(ids).not.toContain('excluded-id');
+
+// 전략 3: 경계값만 확인 (첫/마지막)
+expect(result[0]).toMatchObject(firstExpected);
+expect(result[result.length - 1]).toMatchObject(lastExpected);
+
+// 전략 4: 중복 확인
+const uniqueIds = new Set(result.map(r => r.id));
+expect(uniqueIds.size).toBe(result.length);
+```
+
+**실전 예시 - 날짜 배열 검증:**
+
+```typescript
+// 연속된 날짜 확인
+const dates = result.map(e => e.date);
+const expectedDates = ['2024-01-15', '2024-01-16', '2024-01-17'];
+expect(dates).toEqual(expectedDates);
+
+// 특정 패턴 확인 (매주 월요일)
+result.forEach(event => {
+  const date = new Date(event.date);
+  expect(date.getDay()).toBe(1); // 월요일
+});
+
+// 시간 순서 확인
+for (let i = 1; i < result.length; i++) {
+  const prev = new Date(result[i - 1].date);
+  const curr = new Date(result[i].date);
+  expect(curr.getTime()).toBeGreaterThan(prev.getTime());
+}
+```
+
+### 3. RTL 쿼리 우선순위
 
 ```typescript
 // ✅ 1순위: getByRole

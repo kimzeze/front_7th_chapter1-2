@@ -77,7 +77,76 @@ it('31일 선택 시 31일이 없는 달(2월, 4월, 6월, 9월, 11월)은 건�
 it('엣지 케이스를 처리한다', () => {});
 ```
 
-### 3. 테스트 분류
+### 3. 패턴 검증 vs 개별 값 검증
+
+**❌ 피해야 할 방식: 인덱스별 개별 체크**
+
+깨지기 쉽고, 반복적이며, 의도가 불명확함
+
+```typescript
+// ❌ 나쁜 예 - 유지보수 어려움
+it('매월 30일에 반복된다', () => {
+  const result = generateMonthlyEvents(baseEvent);
+  
+  expect(result[0].date).toBe('2025-01-30');
+  expect(result[1].date).toBe('2025-03-30');
+  expect(result[2].date).toBe('2025-04-30');
+  expect(result[3].date).toBe('2025-05-30');
+  // ... 11줄 더
+  
+  // 문제점:
+  // - 반복적
+  // - 개수 변경 시 깨짐
+  // - 진짜 검증 의도 불명확 (모든 날짜가 30일? 2월 제외?)
+});
+```
+
+**✅ 권장 방식: 패턴 검증**
+
+변경에 강하고, 의도가 명확하며, 유지보수 쉬움
+
+```typescript
+// ✅ 좋은 예 - 패턴으로 검증
+it('매월 30일에 반복되고 30일이 없는 달은 건너뛴다', () => {
+  const result = generateMonthlyEvents(baseEvent);
+  
+  // 개수 확인
+  expect(result).toHaveLength(11); // 2월 제외 11개월
+  
+  // 모든 날짜가 30일인지 패턴 검증
+  result.forEach(event => {
+    const day = event.date.split('-')[2];
+    expect(day).toBe('30');
+  });
+  
+  // 2월이 없는지 확인
+  const months = result.map(e => e.date.split('-')[1]);
+  expect(months).not.toContain('02');
+  
+  // 장점:
+  // - 검증 의도 명확 (30일 + 2월 제외)
+  // - 개수 변경에 강함
+  // - 유지보수 쉬움
+});
+```
+
+**패턴 검증 전략:**
+
+```typescript
+// 전략 1: forEach로 공통 패턴 확인
+result.forEach(item => expect(item.property).toBe(expected));
+
+// 전략 2: map으로 추출 후 검증
+const values = result.map(item => item.key);
+expect(values).toContain('expected');
+expect(values).not.toContain('excluded');
+
+// 전략 3: 경계값만 확인 (첫/마지막)
+expect(result[0]).toBe(firstExpected);
+expect(result[result.length - 1]).toBe(lastExpected);
+```
+
+### 4. 테스트 분류
 
 ```typescript
 describe('기능명', () => {

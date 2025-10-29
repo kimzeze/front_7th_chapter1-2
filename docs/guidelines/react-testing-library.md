@@ -275,6 +275,157 @@ function renderWithProviders(ui: ReactElement) {
 
 ---
 
+## 배열/리스트 검증 베스트 프랙티스
+
+### 원칙: 패턴 검증 > 개별 값 검증
+
+**❌ 안티패턴: 인덱스별 일일이 체크**
+
+```typescript
+// 나쁜 예: 깨지기 쉽고 의도 불명확
+const result = generateMonthlyEvents(baseEvent);
+expect(result[0].date).toBe('2025-01-30');
+expect(result[1].date).toBe('2025-03-30');
+expect(result[2].date).toBe('2025-04-30');
+// ... 9줄 더
+
+// 문제점:
+// - 반복적
+// - 개수 변경 시 모두 수정 필요
+// - 검증 의도 불명확 (모든 날짜가 30일? 2월 제외?)
+```
+
+**✅ 베스트 프랙티스: 패턴으로 검증**
+
+```typescript
+// 좋은 예: 의도 명확, 변경에 강함
+const result = generateMonthlyEvents(baseEvent);
+
+// 1. 개수
+expect(result).toHaveLength(11); // 2월 제외
+
+// 2. 패턴 - 모든 날짜가 30일
+result.forEach(event => {
+  const day = event.date.split('-')[2];
+  expect(day).toBe('30');
+});
+
+// 3. 제외 - 2월 없음
+const months = result.map(e => e.date.split('-')[1]);
+expect(months).not.toContain('02');
+```
+
+---
+
+### 시나리오별 검증 패턴
+
+#### 1. 날짜 배열 검증
+
+```typescript
+// 특정 일(day)이 모두 같은지
+dates.forEach(date => {
+  const day = date.split('-')[2];
+  expect(day).toBe('15');
+});
+
+// 특정 월이 없는지
+const months = dates.map(d => d.split('-')[1]);
+expect(months).not.toContain('02');
+expect(months).not.toContain('04');
+
+// 연속된 월인지
+const expectedMonths = ['01', '03', '05', '07'];
+expect(months).toEqual(expectedMonths);
+
+// 날짜 순서 확인
+for (let i = 1; i < dates.length; i++) {
+  const prev = new Date(dates[i - 1]);
+  const curr = new Date(dates[i]);
+  expect(curr.getTime()).toBeGreaterThan(prev.getTime());
+}
+```
+
+#### 2. ID 중복 검증
+
+```typescript
+// 모든 ID가 고유한지
+const ids = items.map(item => item.id);
+const uniqueIds = new Set(ids);
+expect(uniqueIds.size).toBe(ids.length);
+
+// 특정 ID 포함/제외
+expect(ids).toContain('expected-id');
+expect(ids).not.toContain('deleted-id');
+```
+
+#### 3. 공통 속성 검증
+
+```typescript
+// 모든 아이템이 조건 만족
+items.forEach(item => {
+  expect(item.category).toBe('work');
+  expect(item.status).toBe('active');
+  expect(item.createdBy).toBeDefined();
+});
+
+// 특정 값 범위 확인
+prices.forEach(price => {
+  expect(price).toBeGreaterThanOrEqual(0);
+  expect(price).toBeLessThanOrEqual(1000);
+});
+```
+
+#### 4. 요일 패턴 검증
+
+```typescript
+// 매주 월요일 확인
+result.forEach(event => {
+  const date = new Date(event.date);
+  expect(date.getDay()).toBe(1); // 0=일, 1=월
+});
+
+// 주말 제외 확인
+result.forEach(event => {
+  const day = new Date(event.date).getDay();
+  expect(day).not.toBe(0); // 일요일
+  expect(day).not.toBe(6); // 토요일
+});
+```
+
+#### 5. 경계값 확인
+
+```typescript
+// 첫 번째와 마지막만 검증
+expect(result[0]).toMatchObject({
+  date: '2024-01-01',
+  title: '첫 이벤트',
+});
+
+expect(result[result.length - 1]).toMatchObject({
+  date: '2024-12-31',
+  title: '마지막 이벤트',
+});
+
+// 중간값 샘플링 (필요시)
+const middleIndex = Math.floor(result.length / 2);
+expect(result[middleIndex].date).toMatch(/2024-06/);
+```
+
+---
+
+### 검증 전략 선택 가이드
+
+| 검증 목적 | 방법 | 예시 |
+|---------|------|------|
+| 개수 확인 | `toHaveLength()` | `expect(result).toHaveLength(12)` |
+| 공통 패턴 | `forEach()` | `result.forEach(r => expect(r.day).toBe('30'))` |
+| 포함/제외 | `map()` + `toContain()` | `expect(months).not.toContain('02')` |
+| 경계값 | `[0]`, `[length-1]` | `expect(result[0].date).toBe('2024-01-01')` |
+| 순서 | `for` 루프 비교 | `expect(curr > prev).toBe(true)` |
+| 중복 | `Set` 비교 | `expect(new Set(ids).size).toBe(ids.length)` |
+
+---
+
 ## 체크리스트
 
 테스트 작성 시 확인:
@@ -284,3 +435,4 @@ function renderWithProviders(ui: ReactElement) {
 - [ ] 비동기 처리를 올바르게 했는가?
 - [ ] 사용자 관점에서 작성했는가?
 - [ ] 구현 세부사항을 테스트하지 않았는가?
+- [ ] 배열 검증 시 패턴을 사용했는가? (인덱스별 체크 지양)
