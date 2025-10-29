@@ -83,11 +83,8 @@ export function getNextOccurrence(currentDate: Date, repeatType: RepeatType): Da
     case 'monthly':
       return getNextMonthlyOccurrence(currentDate);
 
-    case 'yearly': {
-      const next = new Date(currentDate);
-      next.setFullYear(next.getFullYear() + 1);
-      return next;
-    }
+    case 'yearly':
+      return getNextYearlyOccurrence(currentDate);
 
     default:
       return null;
@@ -136,6 +133,76 @@ function getNextMonthlyOccurrence(currentDate: Date): Date | null {
       return next;
     }
   }
+}
+
+/**
+ * 매년 반복의 다음 발생 날짜를 계산
+ *
+ * 2월 29일(윤년에만 존재)의 경우, 평년을 건너뛰고 다음 윤년을 찾아 반환합니다.
+ * 예: 2024-02-29 → 2028-02-29 (2025~2027 평년 건너뜀)
+ *
+ * @param currentDate - 현재 날짜
+ * @returns 다음 유효한 매년 반복 날짜 또는 null (MAX_DATE 초과 시)
+ */
+function getNextYearlyOccurrence(currentDate: Date): Date | null {
+  const month = currentDate.getMonth();
+  const day = currentDate.getDate();
+  const maxDate = new Date(MAX_DATE);
+
+  // 2월 29일이 아닌 경우: 일반 동작 (+1년)
+  if (!(month === 1 && day === 29)) {
+    const next = new Date(currentDate);
+    next.setFullYear(next.getFullYear() + 1);
+    return next;
+  }
+
+  // 2월 29일인 경우: 다음 윤년 찾기
+  let year = currentDate.getFullYear() + 1;
+  const maxYear = maxDate.getFullYear();
+
+  while (year <= maxYear) {
+    if (isLeapYear(year)) {
+      const nextLeapDate = new Date(year, 1, 29); // 1 = 2월 (0-indexed)
+
+      // MAX_DATE 초과하면 null 반환
+      if (nextLeapDate > maxDate) {
+        return null;
+      }
+
+      return nextLeapDate;
+    }
+    year++;
+  }
+
+  // 다음 윤년이 MAX_DATE를 초과하면 null 반환
+  return null;
+}
+
+/**
+ * 윤년 여부 판별
+ *
+ * 윤년 규칙:
+ * 1. 4로 나누어떨어지지 않으면 평년
+ * 2. 100으로 나누어떨어지지만 400으로 나누어떨어지지 않으면 평년
+ * 3. 그 외는 윤년
+ *
+ * @param year - 연도
+ * @returns 윤년이면 true, 평년이면 false
+ * @example
+ * isLeapYear(2024) // true (4로 나누어떨어짐)
+ * isLeapYear(2025) // false (4로 나누어떨어지지 않음)
+ * isLeapYear(2100) // false (100으로 나누어떨어지지만 400으로는 안 됨)
+ * isLeapYear(2000) // true (400으로 나누어떨어짐)
+ */
+function isLeapYear(year: number): boolean {
+  // 4로 나누어떨어지지 않으면 평년
+  if (year % 4 !== 0) return false;
+
+  // 100으로 나누어떨어지지만 400으로 나누어떨어지지 않으면 평년
+  if (year % 100 === 0 && year % 400 !== 0) return false;
+
+  // 그 외는 윤년
+  return true;
 }
 
 /**
