@@ -13,6 +13,7 @@ docs/stories/story-XX-제목.md
 ```
 
 **예시**:
+
 - `story-01-select-repeat-type.md`
 - `story-02-display-repeat-icon.md`
 - `story-03-set-repeat-end.md`
@@ -51,4 +52,3 @@ Specs (10-15개) - 기술 작업 상세
 - Epic: `docs/epics/` 폴더
 - Specs: `docs/specs/` 폴더
 - TODO: 프로젝트 루트 `TODO.md`
-

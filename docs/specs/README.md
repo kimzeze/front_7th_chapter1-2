@@ -13,6 +13,7 @@ docs/specs/XXX-작업명.md
 ```
 
 **예시**:
+
 - `001-repeatinfo-id-field.md`
 - `003-generate-recurring-events.md`
 - `008-save-recurring-events-api.md`

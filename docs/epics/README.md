@@ -13,6 +13,7 @@ docs/epics/[프로젝트명].md
 ```
 
 **예시**:
+
 - `recurring-events.md`
 - `notification-system.md`
 
@@ -46,4 +47,3 @@ Specs (How?) - "어떻게 기술적으로 구현하는가?"
 - Stories: `docs/stories/` 폴더
 - Specs: `docs/specs/` 폴더
 - TODO: 프로젝트 루트 `TODO.md`
-

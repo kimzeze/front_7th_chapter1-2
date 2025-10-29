@@ -86,11 +86,13 @@ Phase 5: REFACTOR - 리팩토링 (Refactorer)
 **작업 순서**:
 
 1. 과제 명세 분석
+
    - 전체 비즈니스 목표 추출
    - 핵심 가치 파악
    - 제약사항 정리
 
 2. Epic 문서 작성
+
    - 템플릿: `docs/templates/epic-template.md` 참고
    - 구조:
      - **개요**: 프로젝트 설명 및 배경
@@ -105,6 +107,7 @@ Phase 5: REFACTOR - 리팩토링 (Refactorer)
    - 예시: `docs/epics/recurring-events.md`
 
 **출력 예시**:
+
 ```
 ✅ Epic 작성 완료
 - 파일: docs/epics/recurring-events.md
@@ -121,12 +124,14 @@ Phase 5: REFACTOR - 리팩토링 (Refactorer)
 **작업 순서**:
 
 1. Epic을 5-7개 사용자 스토리로 분할
+
    - 분할 기준:
      - 하나의 Story = 사용자 가치 단위
      - 독립적으로 데모 가능
      - 2-4개 기술 작업으로 구성 가능
 
 2. 각 Story 문서 작성
+
    - 템플릿: `docs/templates/story-template.md` 참고
    - 구조:
      - **사용자 스토리**: As a..., I want..., So that...
@@ -136,11 +141,12 @@ Phase 5: REFACTOR - 리팩토링 (Refactorer)
 
 3. 파일 저장
    - 위치: `docs/stories/story-XX-제목.md`
-   - 예시: 
+   - 예시:
      - `docs/stories/story-01-select-repeat-type.md`
      - `docs/stories/story-02-display-repeat-icon.md`
 
 **출력 예시**:
+
 ```
 ✅ Stories 작성 완료
 - 총 5개 Story 생성
@@ -162,6 +168,7 @@ Phase 5: REFACTOR - 리팩토링 (Refactorer)
 Stories를 기반으로 핵심 기능을 추출합니다.
 
 예시:
+
 - 반복 유형 선택
 - 반복 일정 표시
 - 반복 종료 설정
@@ -335,6 +342,7 @@ Stories를 기반으로 핵심 기능을 추출합니다.
 📌 Phase 0 완료: 문서 검토
 
 생성된 문서:
+
 - Epic: docs/epics/[파일명].md
 - Stories: docs/stories/ (X개 파일)
 - TODO.md: 프로젝트 루트
@@ -342,24 +350,29 @@ Stories를 기반으로 핵심 기능을 추출합니다.
 검토 포인트:
 
 1. Epic이 적절한가?
+
    - 비즈니스 목표가 명확한가?
    - 범위와 제약사항이 정확한가?
    - 성공 지표가 구체적인가?
 
 2. Stories가 적절한가?
+
    - 사용자 관점으로 작성되었는가?
    - 인수 기준이 명확한가?
    - 각 Story가 독립적인가?
 
 3. 작업 분할이 적절한가?
+
    - 각 작업이 2-3시간 이내인가?
    - 너무 크거나 작은 작업은 없는가?
 
 4. 우선순위가 맞는가?
+
    - Phase 순서가 논리적인가?
    - P0/P1 구분이 적절한가?
 
 5. 누락된 작업이 없는가?
+
    - 모든 요구사항이 커버되는가?
 
 6. 의존성이 명확한가?
@@ -385,12 +398,14 @@ Stories를 기반으로 핵심 기능을 추출합니다.
 **파일명 형식**: `docs/specs/XXX-작업명.md`
 
 예시:
+
 - `docs/specs/001-repeatinfo-id-field.md`
 - `docs/specs/003-generate-recurring-events.md`
 
 **템플릿**: `docs/templates/spec-template.md` 참고
 
 **구조**:
+
 1. **개요**: 작업 설명 및 목적
 2. **요구사항**: 기능/비기능 요구사항
 3. **영향 범위**: 수정/생성할 파일 목록
@@ -427,6 +442,7 @@ docs/templates/spec-template.md 템플릿을 참고해.
 생성된 파일: docs/specs/XXX-작업명.md
 
 검토 포인트:
+
 - [ ] 명세가 요구사항과 일치하는가?
 - [ ] 영향 범위가 정확한가?
 - [ ] 데이터 구조가 명확한가?
