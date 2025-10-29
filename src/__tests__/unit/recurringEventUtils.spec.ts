@@ -548,3 +548,134 @@ describe('getNextOccurrence - monthly 엣지 케이스', () => {
     expect(next).toEqual(new Date('2025-05-31'));
   });
 });
+
+describe('generateRecurringEvents - 윤년 2월 29일 매년 반복 엣지 케이스', () => {
+  const createBaseEvent = (overrides: Partial<EventForm> = {}): EventForm => ({
+    title: '테스트 이벤트',
+    date: '2024-02-29',
+    startTime: '10:00',
+    endTime: '11:00',
+    description: '테스트 설명',
+    location: '테스트 장소',
+    category: '업무',
+    repeat: {
+      type: 'yearly',
+      interval: 1,
+    },
+    notificationTime: 10,
+    ...overrides,
+  });
+
+  it('윤년 2월 29일 매년 반복: MAX_DATE 제한으로 1개만 생성', () => {
+    // Given: 2024-02-29(윤년), 다음 윤년은 2028(MAX_DATE 초과)
+    const baseEvent = createBaseEvent({
+      date: '2024-02-29',
+      repeat: {
+        type: 'yearly',
+        interval: 1,
+        endDate: '2030-12-31',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 2024만 (다음 윤년 2028은 MAX_DATE 초과)
+    expect(result).toHaveLength(1);
+
+    // 2. 패턴: 2월 29일만
+    result.forEach((event) => {
+      const [, month, day] = event.date.split('-');
+      expect(month).toBe('02');
+      expect(day).toBe('29');
+    });
+
+    // 3. 경계값
+    expect(result[0].date).toBe('2024-02-29');
+  });
+
+  it('평년 2월 28일 매년 반복: 모든 해에 생성', () => {
+    // Given: 2024-02-28, 2025도 28일까지는 존재
+    const baseEvent = createBaseEvent({
+      date: '2024-02-28',
+      repeat: {
+        type: 'yearly',
+        interval: 1,
+        endDate: '2026-12-31',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 2024, 2025 (2개, MAX_DATE가 2025-12-31이므로 2026은 생성 안 됨)
+    expect(result).toHaveLength(2);
+
+    // 2. 패턴: 모든 날짜가 02-28
+    result.forEach((event) => {
+      const [, month, day] = event.date.split('-');
+      expect(month).toBe('02');
+      expect(day).toBe('28');
+    });
+
+    // 3. 경계값
+    expect(result[0].date).toBe('2024-02-28');
+    expect(result[1].date).toBe('2025-02-28');
+  });
+
+  it('일반 날짜 매년 반복: 기존 동작 유지', () => {
+    // Given: 일반 날짜는 윤년 검증 없이 매년 생성
+    const baseEvent = createBaseEvent({
+      date: '2024-03-15',
+      repeat: {
+        type: 'yearly',
+        interval: 1,
+        endDate: '2030-12-31',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 2024, 2025 (MAX_DATE 2025-12-31)
+    expect(result).toHaveLength(2);
+
+    // 2. 패턴: 모든 날짜가 03-15
+    result.forEach((event) => {
+      const [, month, day] = event.date.split('-');
+      expect(month).toBe('03');
+      expect(day).toBe('15');
+    });
+
+    // 3. 경계값
+    expect(result[0].date).toBe('2024-03-15');
+    expect(result[1].date).toBe('2025-03-15');
+  });
+});
+
+describe('getNextOccurrence - yearly 윤년 엣지 케이스', () => {
+  it('2월 29일(윤년)의 다음은 null (다음 윤년 2028이 MAX_DATE 초과)', () => {
+    const current = new Date('2024-02-29');
+    const next = getNextOccurrence(current, 'yearly');
+
+    // 다음 윤년은 2028이지만 MAX_DATE가 2025-12-31이므로 null
+    expect(next).toBeNull();
+  });
+
+  it('2월 28일의 다음은 2025-02-28 (일반 동작)', () => {
+    const current = new Date('2024-02-28');
+    const next = getNextOccurrence(current, 'yearly');
+
+    expect(next).toEqual(new Date('2025-02-28'));
+  });
+
+  it('일반 날짜의 다음은 +1년 (일반 동작)', () => {
+    const current = new Date('2024-03-15');
+    const next = getNextOccurrence(current, 'yearly');
+
+    expect(next).toEqual(new Date('2025-03-15'));
+  });
+});
