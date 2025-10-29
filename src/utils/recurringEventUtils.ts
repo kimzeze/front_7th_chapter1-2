@@ -81,9 +81,39 @@ export function getNextOccurrence(currentDate: Date, repeatType: RepeatType): Da
     }
 
     case 'monthly': {
-      const next = new Date(currentDate);
-      next.setMonth(next.getMonth() + 1);
-      return next;
+      const originalDay = currentDate.getDate();
+      const maxDate = new Date(MAX_DATE);
+      let next = new Date(currentDate);
+
+      // 다음 유효한 날짜를 찾을 때까지 반복
+      while (true) {
+        // 다음 달로 이동
+        const currentMonth = next.getMonth();
+        const currentYear = next.getFullYear();
+
+        // 다음 달의 같은 날짜로 설정 시도
+        next.setMonth(currentMonth + 1);
+        next.setDate(originalDay);
+
+        // 월이 예상보다 더 증가했다면 (날짜가 overflow되어 다음 달로 넘어감)
+        // 예: 2월 31일 → 3월 3일이 되면 month가 2가 아니라 3이 됨
+        const expectedMonth = (currentMonth + 1) % 12;
+        if (next.getMonth() !== expectedMonth) {
+          // 의도한 달로 돌아가서 다시 시도
+          next = new Date(currentYear, currentMonth + 1, 1);
+          continue;
+        }
+
+        // MAX_DATE 초과하면 null 반환
+        if (next > maxDate) {
+          return null;
+        }
+
+        // 날짜가 일치하면 반환
+        if (next.getDate() === originalDay) {
+          return next;
+        }
+      }
     }
 
     case 'yearly': {
