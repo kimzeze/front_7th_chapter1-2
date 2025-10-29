@@ -1,0 +1,87 @@
+# 프로젝트 규칙 및 컨텍스트
+
+## 프로젝트 개요
+- **프레임워크**: React 19 + Vite + TypeScript
+- **테스팅**: Vitest + React Testing Library
+- **개발 방법론**: TDD (Test-Driven Development)
+- **UI 라이브러리**: Material-UI (MUI)
+
+## 핵심 원칙
+
+### 1. TDD 사이클 준수
+- RED → GREEN → REFACTOR 순서 엄격히 준수
+- 테스트를 먼저 작성하고 실패 확인
+- 최소한의 구현으로 테스트 통과
+- 리팩토링 후에도 테스트 통과 유지
+
+### 2. 코딩 컨벤션
+- **변수**: camelCase, 명사형 (brandList, selectedItem)
+- **함수**: camelCase, 동사형 (fetchBrand, handleSubmit)
+- **컴포넌트**: PascalCase, 명사형 (UserProfile)
+- **타입/인터페이스**: PascalCase (UserProfileProps)
+- **상수**: UPPER_SNAKE_CASE (API_URL)
+
+### 3. 파일 네이밍
+- **컴포넌트**: PascalCase (UserProfile.tsx)
+- **유틸/훅/타입**: camelCase (useFetchData.ts, formatDate.ts)
+- **폴더**: kebab-case (user-profile)
+
+### 4. 함수 작성 규칙
+- **컴포넌트**: function 키워드 사용
+  ```typescript
+  export default function UserProfile() {}
+  ```
+- **일반 함수**: 화살표 함수 사용
+  ```typescript
+  const mapBrandTypeLabel = () => {}
+  ```
+
+### 5. API 함수 네이밍
+- POST: create* (createEvent)
+- GET: fetch* (fetchEvents)
+- PUT/PATCH: update* (updateEvent)
+- DELETE: delete* (deleteEvent)
+
+## 프로젝트 구조
+```
+src/
+├── apis/           # API 호출 함수
+├── hooks/          # Custom Hooks
+├── utils/          # 유틸리티 함수
+├── types.ts        # 타입 정의
+├── __tests__/      # 테스트 파일
+│   ├── unit/       # 단위 테스트
+│   ├── hooks/      # 훅 테스트
+│   └── utils.ts    # 테스트 유틸
+└── App.tsx         # 메인 컴포넌트
+```
+
+## 테스트 작성 규칙
+- 테스트 파일명: `*.spec.ts` 또는 `*.spec.tsx`
+- React Testing Library 사용
+- 사용자 행동 기반 테스트 작성
+- 구현 세부사항 테스트 금지
+- AAA 패턴 (Arrange-Act-Assert) 준수
+
+## 중요 제약사항
+- **절대 테스트 코드를 구현 단계에서 수정하지 말 것**
+- **명세에 없는 기능 추가 금지**
+- **기존 프로젝트 구조 최대한 활용**
+- **과도한 추상화 지양**
+
+## 서버 API 엔드포인트
+- GET `/api/events` - 모든 이벤트 조회
+- POST `/api/events` - 단일 이벤트 생성
+- PUT `/api/events/:id` - 단일 이벤트 수정
+- DELETE `/api/events/:id` - 단일 이벤트 삭제
+- POST `/api/events-list` - 여러 이벤트 생성 (반복 일정용)
+- PUT `/api/events-list` - 여러 이벤트 수정
+- DELETE `/api/events-list` - 여러 이벤트 삭제
+- PUT `/api/recurring-events/:repeatId` - 반복 일정 전체 수정
+- DELETE `/api/recurring-events/:repeatId` - 반복 일정 전체 삭제
+
+## 커밋 메시지 컨벤션
+- `test: [기능명] 테스트 추가 (RED)`
+- `feat: [기능명] 구현 (GREEN)`
+- `refactor: [기능명] 리팩토링 (REFACTOR)`
+
