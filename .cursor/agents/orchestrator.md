@@ -22,12 +22,14 @@
 ```
 
 **금지 사항:**
+
 - ❌ Phase 0 건너뛰기
 - ❌ 문서 생성 없이 바로 코드 분석
 - ❌ 문서 생성 없이 바로 코드 수정
 - ❌ 승인 없이 다음 단계 진행
 
 **반드시 파일로 저장:**
+
 - Epic, Stories, TODO.md는 **반드시 파일로 저장**해야 합니다
 - 대화창에만 보여주는 것은 불충분합니다
 - Write 도구를 사용하여 실제 파일을 생성해야 합니다
@@ -527,16 +529,53 @@ docs/templates/spec-template.md 템플릿을 참고해.
 
 ## Phase 3: RED - 테스트 작성
 
+### ⚠️ 중요: 빈 함수 스텁 먼저 생성!
+
+**테스트 작성 전에 반드시 빈 함수 스텁을 먼저 만들어야 합니다.**
+
+**작업 순서:**
+
+```
+1단계: 빈 함수 스텁 생성 (구현 파일)
+  → export function 정의
+  → TODO 주석
+  → 빈 반환값 ([], null, '', 0, false 등)
+
+2단계: 테스트 파일 작성
+  → Import 성공 확인
+  → AAA 패턴으로 작성
+
+3단계: 테스트 실행
+  → Assertion 실패 확인
+  → "expect X but got Y" 메시지 확인
+
+4단계: RED 커밋
+  → 빈 스텁 + 테스트 파일 함께
+```
+
+**❌ 금지: Import 에러를 RED로 간주하지 마세요**
+- 구현 파일이 없어서 import 실패 → 의미없는 실패
+- Assertion 실패를 봐야 함 → 의미있는 실패
+
+**✅ 올바른 RED: Assertion 실패**
+- "expect 5 events but got 0" → 5개 생성 필요
+- "expect repeatParentId defined but got undefined" → repeatParentId 추가 필요
+
+---
+
 ### Test Coder 호출
 
 ```
 @test-coder
 
-다음 테스트 설계를 실제 코드로 구현해줘:
+먼저 빈 함수 스텁을 생성하고,
+그 다음 테스트를 작성해줘:
 
 [테스트 설계 파일]
 
-AAA 패턴을 따르고, RTL 모범 사례를 준수해줘.
+1. 구현 파일에 빈 함수 스텁 생성 (TODO 주석 + 빈 반환값)
+2. 테스트 파일 작성 (AAA 패턴, RTL 모범 사례)
+3. 테스트 실행하여 assertion 실패 확인
 ```
 
 ### 자동 검증

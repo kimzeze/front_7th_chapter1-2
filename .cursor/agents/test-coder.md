@@ -23,6 +23,112 @@
 
 ---
 
+## ⚠️ RED 단계 핵심 원칙
+
+### 빈 함수 스텁 먼저 생성 (필수!)
+
+테스트 작성 **전에** 반드시 빈 함수 스텁을 먼저 생성해야 합니다.
+
+**❌ 잘못된 방식 (Import 에러):**
+
+```typescript
+// 구현 파일이 아예 없는 상태에서 테스트 작성
+import { myFunction } from './myModule';  // ❌ Cannot find module
+
+describe('myFunction', () => {
+  it('should work', () => {
+    // 테스트 코드...
+  });
+});
+
+// 문제점:
+// - 테스트가 실행조차 안됨
+// - "파일 없음" 에러만 발생
+// - 어떤 assertion이 실패하는지 알 수 없음
+```
+
+**✅ 올바른 방식 (빈 스텁 먼저):**
+
+```typescript
+// 1단계: 빈 함수 스텁 먼저 생성 (구현 파일에)
+// src/utils/myModule.ts
+export function myFunction(input: string): string {
+  // TODO: 구현 예정
+  return '';
+}
+
+// 2단계: 그 다음 테스트 작성
+// src/__tests__/myModule.spec.ts
+import { myFunction } from '../utils/myModule';  // ✅ Import 성공!
+
+describe('myFunction', () => {
+  it('should return uppercase', () => {
+    expect(myFunction('hello')).toBe('HELLO');
+    // ✅ "expected 'HELLO' but got ''" - 의미있는 실패!
+  });
+});
+
+// 장점:
+// - 테스트가 실제로 실행됨
+// - Assertion 실패를 명확히 볼 수 있음
+// - 무엇을 구현해야 하는지 정확히 알게 됨
+// - TypeScript 타입 체크 가능
+```
+
+**작업 순서:**
+
+```
+1. 구현 파일 생성 (빈 스텁만)
+   └─ export function 정의
+   └─ TODO 주석
+   └─ 빈 반환값 ([], null, '', false 등)
+
+2. 테스트 파일 작성
+   └─ import 성공 확인
+   └─ 테스트 케이스 작성
+
+3. 테스트 실행
+   └─ Assertion 실패 확인
+   └─ 에러 메시지 읽기
+
+4. RED 커밋
+   └─ 빈 스텁 + 테스트 파일
+```
+
+**이렇게 하는 이유:**
+
+- ✅ **TDD 정통 방식**: Kent Beck, Uncle Bob 권장
+- ✅ **의미있는 피드백**: "expect 5 but got 0" 같은 구체적 메시지
+- ✅ **테스트 검증**: 테스트 자체가 올바른지 확인 가능
+- ✅ **타입 안전성**: TypeScript 컴파일 통과
+- ✅ **개발 경험**: IDE 자동완성 작동
+
+**예시 - 빈 스텁 패턴:**
+
+```typescript
+// 함수 → 빈 반환값
+export function calculate(): number {
+  return 0;
+}
+
+// 배열 → 빈 배열
+export function getItems(): Item[] {
+  return [];
+}
+
+// 객체 → null 또는 빈 객체
+export function getUser(): User | null {
+  return null;
+}
+
+// boolean → false
+export function isValid(): boolean {
+  return false;
+}
+```
+
+---
+
 ## Input / Output
 
 ### Input
