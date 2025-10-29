@@ -331,3 +331,220 @@ describe('getNextOccurrence', () => {
     expect(next).toBeNull();
   });
 });
+
+describe('generateRecurringEvents - 31일 매월 반복 엣지 케이스', () => {
+  const createBaseEvent = (overrides: Partial<EventForm> = {}): EventForm => ({
+    title: '테스트 이벤트',
+    date: '2025-01-01',
+    startTime: '10:00',
+    endTime: '11:00',
+    description: '테스트 설명',
+    location: '테스트 장소',
+    category: '업무',
+    repeat: {
+      type: 'none',
+      interval: 1,
+    },
+    notificationTime: 10,
+    ...overrides,
+  });
+
+  it('31일 매월 반복: 31일이 없는 달(2,4,6,9,11월)을 건너뜀', () => {
+    // Given
+    const baseEvent = createBaseEvent({
+      date: '2025-01-31',
+      repeat: {
+        type: 'monthly',
+        interval: 1,
+        endDate: '2025-12-31',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 31일이 있는 달만 생성 (1,3,5,7,8,10,12월 = 7개)
+    expect(result).toHaveLength(7);
+
+    // 2. 패턴: 모든 날짜가 31일
+    result.forEach((event) => {
+      const day = event.date.split('-')[2];
+      expect(day).toBe('31');
+    });
+
+    // 3. 제외: 31일이 없는 달 확인
+    const months = result.map((e) => e.date.split('-')[1]);
+    expect(months).not.toContain('02'); // 2월
+    expect(months).not.toContain('04'); // 4월
+    expect(months).not.toContain('06'); // 6월
+    expect(months).not.toContain('09'); // 9월
+    expect(months).not.toContain('11'); // 11월
+
+    // 4. 경계값: 첫 번째와 마지막만 확인
+    expect(result[0].date).toBe('2025-01-31');
+    expect(result[result.length - 1].date).toBe('2025-12-31');
+  });
+
+  it('30일 매월 반복: 2월만 건너뜀 (11개 생성)', () => {
+    // Given
+    const baseEvent = createBaseEvent({
+      date: '2025-01-30',
+      repeat: {
+        type: 'monthly',
+        interval: 1,
+        endDate: '2025-12-31',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 2월만 제외 (11개)
+    expect(result).toHaveLength(11);
+
+    // 2. 패턴: 모든 날짜가 30일
+    result.forEach((event) => {
+      const day = event.date.split('-')[2];
+      expect(day).toBe('30');
+    });
+
+    // 3. 제외: 2월 없음
+    const months = result.map((e) => e.date.split('-')[1]);
+    expect(months).not.toContain('02');
+
+    // 4. 경계값
+    expect(result[0].date).toBe('2025-01-30');
+    expect(result[result.length - 1].date).toBe('2025-12-30');
+  });
+
+  it('29일 매월 반복: 평년(2025)에는 2월 건너뜀 (11개 생성)', () => {
+    // Given
+    const baseEvent = createBaseEvent({
+      date: '2025-01-29',
+      repeat: {
+        type: 'monthly',
+        interval: 1,
+        endDate: '2025-12-31',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 평년 2월은 28일까지만이므로 제외 (11개)
+    expect(result).toHaveLength(11);
+
+    // 2. 패턴: 모든 날짜가 29일
+    result.forEach((event) => {
+      const day = event.date.split('-')[2];
+      expect(day).toBe('29');
+    });
+
+    // 3. 제외: 2월 없음 (28일까지만)
+    const months = result.map((e) => e.date.split('-')[1]);
+    expect(months).not.toContain('02');
+
+    // 4. 경계값
+    expect(result[0].date).toBe('2025-01-29');
+    expect(result[result.length - 1].date).toBe('2025-12-29');
+  });
+
+  it('28일 매월 반복: 모든 달 생성 (12개)', () => {
+    // Given
+    const baseEvent = createBaseEvent({
+      date: '2025-01-28',
+      repeat: {
+        type: 'monthly',
+        interval: 1,
+        endDate: '2025-12-31',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 모든 달이 28일 이상 (12개)
+    expect(result).toHaveLength(12);
+
+    // 2. 패턴: 모든 날짜가 28일
+    result.forEach((event) => {
+      const day = event.date.split('-')[2];
+      expect(day).toBe('28');
+    });
+
+    // 3. 포함: 2월도 포함 (28일 있음)
+    const months = result.map((e) => e.date.split('-')[1]);
+    expect(months).toContain('02');
+
+    // 4. 경계값
+    expect(result[0].date).toBe('2025-01-28');
+    expect(result[result.length - 1].date).toBe('2025-12-28');
+  });
+
+  it('31일 매월 반복: 1월~4월 범위에서 2월, 4월 건너뜀', () => {
+    // Given
+    const baseEvent = createBaseEvent({
+      date: '2025-01-31',
+      repeat: {
+        type: 'monthly',
+        interval: 1,
+        endDate: '2025-04-30',
+      },
+    });
+
+    // When
+    const result = generateRecurringEvents(baseEvent);
+
+    // Then
+    // 1. 개수: 1월, 3월만 (2개)
+    expect(result).toHaveLength(2);
+
+    // 2. 패턴: 모든 날짜가 31일
+    result.forEach((event) => {
+      const day = event.date.split('-')[2];
+      expect(day).toBe('31');
+    });
+
+    // 3. 제외: 2월, 4월 없음
+    const months = result.map((e) => e.date.split('-')[1]);
+    expect(months).not.toContain('02');
+    expect(months).not.toContain('04');
+
+    // 4. 포함: 1월, 3월만
+    expect(months).toEqual(['01', '03']);
+  });
+});
+
+describe('getNextOccurrence - monthly 엣지 케이스', () => {
+  it('1월 31일의 다음은 3월 31일 (2월 건너뜀)', () => {
+    const current = new Date('2025-01-31');
+    const next = getNextOccurrence(current, 'monthly');
+
+    expect(next).toEqual(new Date('2025-03-31'));
+  });
+
+  it('1월 30일의 다음은 3월 30일 (2월 건너뜀)', () => {
+    const current = new Date('2025-01-30');
+    const next = getNextOccurrence(current, 'monthly');
+
+    expect(next).toEqual(new Date('2025-03-30'));
+  });
+
+  it('1월 28일의 다음은 2월 28일 (건너뛰지 않음)', () => {
+    const current = new Date('2025-01-28');
+    const next = getNextOccurrence(current, 'monthly');
+
+    expect(next).toEqual(new Date('2025-02-28'));
+  });
+
+  it('3월 31일의 다음은 5월 31일 (4월 건너뜀)', () => {
+    const current = new Date('2025-03-31');
+    const next = getNextOccurrence(current, 'monthly');
+
+    expect(next).toEqual(new Date('2025-05-31'));
+  });
+});
