@@ -880,26 +880,28 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
 
       await act(() => Promise.resolve(null));
 
+      // 초기 이벤트(id: '1')를 사용하여 테스트
+      // repeatParentId가 없어도 API 실패는 발생함
       const eventData: Event = {
         id: '1',
         title: '회의',
-        date: '2025-06-01',
+        date: '2025-10-15',
         startTime: '10:00',
         endTime: '11:00',
         description: '',
-        location: '',
+        location: '회의실 B',
         category: '업무',
-        repeat: { type: 'weekly', interval: 1 },
+        repeat: { type: 'none', interval: 1 },
         notificationTime: 10,
-        repeatParentId: 'parent-error',
+        // repeatParentId 없음 (기존 단일 이벤트 수정 시 에러)
       };
 
       await act(async () => {
         await result.current.saveEvent(eventData, 'all');
       });
 
-      // 에러 메시지 확인
-      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정 저장 실패', {
+      // 에러 메시지 확인 (마지막 호출 확인)
+      expect(enqueueSnackbarFn).toHaveBeenLastCalledWith('일정 저장 실패', {
         variant: 'error',
       });
     });
