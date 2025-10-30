@@ -725,3 +725,242 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
     });
   });
 });
+
+// 작업 014: 전체 수정 로직 구현
+describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('반복 이벤트 전체 수정', () => {
+    // TC-001: editOption === 'all'일 때 같은 그룹의 모든 이벤트가 수정됨
+    it('TC-001: editOption === "all"일 때 같은 그룹의 모든 이벤트가 수정된다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const eventData: Event = {
+        id: '1',
+        title: '회의 (전체 수정)',
+        date: '2025-01-15',
+        startTime: '11:00',
+        endTime: '12:00',
+        description: '전체 수정됨',
+        location: '회의실 A',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-123',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(eventData, 'all');
+      });
+
+      // 스낵바 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+    });
+
+    // TC-002: 각 이벤트의 날짜는 원본 유지
+    it('TC-002: 전체 수정 시 각 이벤트의 날짜는 원본 유지된다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const eventData: Event = {
+        id: '1',
+        title: '수정된 제목',
+        date: '2025-01-15',
+        startTime: '10:30',
+        endTime: '11:00',
+        description: '수정됨',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-123',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(eventData, 'all');
+      });
+
+      // 정상 수정 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+    });
+  });
+
+  describe('repeatParentId 없는 경우', () => {
+    // TC-003: repeatParentId가 없으면 기존 로직 수행
+    it('TC-003: repeatParentId가 없으면 기존 로직으로 수정된다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const singleEvent: Event = {
+        id: '1',
+        title: '개인 일정',
+        date: '2025-03-01',
+        startTime: '14:00',
+        endTime: '15:00',
+        description: '',
+        location: '',
+        category: '개인',
+        repeat: { type: 'none', interval: 1 },
+        notificationTime: 10,
+        // repeatParentId 없음
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(singleEvent, 'all');
+      });
+
+      // 스낵바 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+    });
+  });
+
+  describe('단일 이벤트만 있는 그룹', () => {
+    // TC-004: 같은 그룹에 1개만 있어도 정상 동작
+    it('TC-004: 같은 그룹에 1개만 있어도 정상적으로 수정된다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const eventData: Event = {
+        id: '1',
+        title: '회의',
+        date: '2025-04-01',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-single',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(eventData, 'all');
+      });
+
+      // 스낵바 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+    });
+  });
+
+  describe('에러 처리', () => {
+    // TC-005: API 실패 시 에러 처리
+    it('TC-005: 전체 수정 중 API 실패 시 에러 메시지를 표시한다', async () => {
+      // Mock: API 실패
+      server.use(
+        http.put('/api/events/:id', () => {
+          return new HttpResponse(null, { status: 500 });
+        })
+      );
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const eventData: Event = {
+        id: '1',
+        title: '회의',
+        date: '2025-06-01',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-error',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(eventData, 'all');
+      });
+
+      // 에러 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정 저장 실패', {
+        variant: 'error',
+      });
+    });
+  });
+
+  describe('통합 시나리오', () => {
+    // TC-006: 전체 수정 후 단일 수정 가능
+    it('TC-006: 전체 수정 후 다시 단일 수정을 할 수 있다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      // 첫 번째: 전체 수정
+      const eventData1: Event = {
+        id: '1',
+        title: '회의 (전체 수정)',
+        date: '2025-07-01',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-integration',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(eventData1, 'all');
+      });
+
+      // 첫 번째 수정 성공 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+
+      // 두 번째: 단일 수정
+      const eventData2: Event = {
+        id: '1',
+        title: '회의 (단일 수정)',
+        date: '2025-07-01',
+        startTime: '11:00',
+        endTime: '12:00',
+        description: '수정됨',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-integration',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(eventData2, 'single');
+      });
+
+      // 두 번째 수정도 성공 확인
+      expect(enqueueSnackbarFn).toHaveBeenLastCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+    });
+  });
+});
