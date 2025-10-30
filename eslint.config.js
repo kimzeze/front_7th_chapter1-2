@@ -127,8 +127,7 @@ export default [
       },
     },
   },
-  pnpm lint:eslint
-  
+
   // Cypress test files configuration
   {
     files: ['**/cypress/**/*.{js,jsx,ts,tsx}', '**/*.cy.{js,jsx,ts,tsx}'],
