@@ -1,6 +1,6 @@
 # 🎯 반복 일정 관리 기능 개발 진행 상황
 
-마지막 업데이트: 2025-10-31
+마지막 업데이트: 2025-10-31 (작업 017 완료)
 
 ---
 
@@ -156,11 +156,13 @@
   - ✅ 완료: 2025-10-31 (TDD 방식: 명세→테스트→RED→GREEN→REFACTOR)
   - 실제 소요: ~30분
 
-- [ ] 017: 전체 삭제 로직 구현
+- [x] 017: 전체 삭제 로직 구현
   - 복잡도: 3/5
   - 예상: 1-2시간
   - 파일: `src/hooks/useEventOperations.ts`
   - 설명: 같은 repeatParentId를 가진 모든 이벤트를 찾아 일괄 삭제 (Promise.all 활용)
+  - ✅ 완료: 2025-10-31 (TDD 방식: 명세→테스트→RED→GREEN→REFACTOR)
+  - 실제 소요: ~2시간
 
 ---
 
@@ -293,18 +295,39 @@
 
 - ✅ 작업 016 완료! TDD 사이클 완성 (RED → GREEN → REFACTOR)
 
+### 2025-10-31 (작업 017 완료!)
+
+- ✅ Phase 1 완료: 명세 작성 (docs/specs/017-delete-all-related-events.md)
+- ✅ Phase 2 완료: 테스트 설계 (docs/specs/017-test-design.md)
+- ✅ Phase 3 완료: RED - 테스트 작성
+  - TC-001~TC-008: 8개 테스트 작성 (전체 삭제, 병렬 처리, 에러 처리, 조건 분기)
+  - 커밋: "test: 작업 017 전체 삭제 로직 테스트 추가 (RED)"
+- ✅ Phase 4 완료: GREEN - 기능 구현
+  - deleteAllRelatedEvents 헬퍼 함수 추가
+  - deleteEvent에서 deleteOption === 'all' 조건 분기
+  - Promise.all을 활용한 병렬 삭제
+  - 모든 테스트 통과 (199/199) ✅
+  - 커밋: "feat: 작업 017 전체 삭제 로직 구현 (GREEN)"
+- ✅ Phase 5 완료: REFACTOR - 코드 정리
+  - handleDeleteSuccess 공통 함수 추가 (중복 제거)
+  - 주석 일관성 개선
+  - 모든 테스트 여전히 통과 (199/199) ✅
+  - 커밋: "refactor: 작업 017 코드 정리 및 리팩토링 (REFACTOR)"
+
+- ✅ 작업 017 완료! TDD 사이클 완성 (RED → GREEN → REFACTOR)
+
 ### 다음 작업
 
-- [ ] 작업 017: 전체 삭제 로직 구현
+- 작업 001-007 (기초 인프라 및 UI) 진행 대기
 
 ---
 
 ## 📊 통계
 
-- **전체**: 9/17
-- **완료**: 9 ✅
+- **전체**: 10/17
+- **완료**: 10 ✅
 - **진행중**: 0 🔄
-- **대기**: 8 ⏳
+- **대기**: 7 ⏳
 
 ---
 
