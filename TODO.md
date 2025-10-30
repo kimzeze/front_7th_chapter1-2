@@ -9,18 +9,21 @@
 ### 반복 일정 생성 로직
 
 - [ ] 001: 반복 일정 생성 유틸 함수 기본 구조
+
   - 복잡도: 3/5
   - 예상: 1-2시간
   - 파일: `src/utils/recurringEventUtils.ts` (신규)
   - 설명: `generateRecurringEvents()` 함수 작성. 매일/매주/매월/매년 반복 로직 구현
 
 - [ ] 002: 31일 매월 반복 엣지 케이스 처리
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/utils/recurringEventUtils.ts`
   - 설명: 31일이 없는 달(2월, 4월, 6월, 9월, 11월)을 건너뛰는 로직
 
 - [ ] 003: 윤년 2월 29일 매년 반복 엣지 케이스 처리
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/utils/recurringEventUtils.ts`
@@ -39,12 +42,14 @@
 ### 반복 설정 UI
 
 - [ ] 005: 반복 설정 UI 주석 해제 및 활성화
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/App.tsx` (라인 441-478)
   - 설명: 주석 처리된 반복 설정 UI 활성화, setRepeatType/setRepeatInterval/setRepeatEndDate 주석 해제
 
 - [ ] 006: 반복 종료일 validation 추가
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/hooks/useEventForm.ts`
@@ -63,6 +68,7 @@
 ### 저장 로직 수정
 
 - [ ] 008: saveEvent에 반복 생성 로직 통합
+
   - 복잡도: 3/5
   - 예상: 1-2시간
   - 파일: `src/hooks/useEventOperations.ts`
@@ -81,6 +87,7 @@
 ### UI 개선
 
 - [ ] 010: 주간/월간 뷰에 반복 아이콘 추가
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/App.tsx` (`renderWeekView`, `renderMonthView`)
@@ -99,12 +106,14 @@
 ### 수정 기능
 
 - [ ] 012: 반복 일정 수정 확인 다이얼로그 UI
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/App.tsx`
   - 설명: "해당 일정만 수정하시겠어요?" 다이얼로그 추가 (예/아니오 버튼)
 
 - [ ] 013: 단일 수정 로직 구현
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/hooks/useEventOperations.ts`
@@ -123,12 +132,14 @@
 ### 삭제 기능
 
 - [ ] 015: 반복 일정 삭제 확인 다이얼로그 UI
+
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/App.tsx`
   - 설명: "해당 일정만 삭제하시겠어요?" 다이얼로그 추가 (예/아니오/취소 버튼)
 
 - [ ] 016: 단일 삭제 로직 구현
+
   - 복잡도: 1/5
   - 예상: ~30분
   - 파일: `src/hooks/useEventOperations.ts`
@@ -150,10 +161,22 @@
 - Phase 0 완료: Epic, Stories, TODO.md 작성
 - 작업 분할 완료 (총 17개 작업)
 
+### 2025-10-30 (작업 008 진행)
+
+- ✅ Phase 1 완료: 명세 작성 (docs/specs/008-save-event-integration.md)
+- ✅ Phase 2 완료: 테스트 설계 (docs/specs/008-test-design.md)
+- 🔴 Phase 3 완료: RED - 테스트 작성
+  - TC-001: 단일 이벤트 (PASS ✓)
+  - TC-002: 매주 반복 (FAIL - generateRecurringEvents 미호출)
+  - TC-007: 수정 모드 (PASS ✓)
+  - TC-005: 부분 실패 (FAIL - 에러 미처리)
+  - TC-008: 빈 배열 (FAIL - generateRecurringEvents 미호출)
+  - 커밋: "test: saveEvent 반복 생성 로직 테스트 추가 (RED)"
+
 ### 다음 작업
 
-- [ ] 인간 검토 대기
-- [ ] 승인 후 작업 001 시작 (Phase 1: 명세 작성)
+- [🔄] 인간 검토 대기
+- [x] 승인 후 작업 001 시작 (Phase 1: 명세 작성)
 
 ---
 
@@ -183,6 +206,7 @@
 ```
 
 **병렬 가능**:
+
 - 001-004 (유틸 함수) 와 005-007 (UI) 는 독립적 (병렬 가능)
 - 008-009 완료 후 010-011, 012-014, 015-017 순차 진행
 
@@ -207,46 +231,4 @@
 
 - `POST /api/events`: 이벤트 생성
 - `PUT /api/events/:id`: 이벤트 수정
-- `DELETE /api/events/:id`: 이벤트 삭제
-- `GET /api/events`: 이벤트 목록 조회
-
-**중요**: 반복 일정은 클라이언트에서 개별 이벤트로 생성하여 서버에 저장. 서버는 반복 로직을 모름.
-
-### 데이터 구조
-
-```typescript
-// 이미 정의된 타입
-type RepeatType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
-
-interface RepeatInfo {
-  type: RepeatType;
-  interval: number;
-  endDate?: string;
-  id?: string;
-}
-
-interface Event extends EventForm {
-  id: string;
-  repeatParentId?: string; // 반복 그룹 추적용
-}
-```
-
-### TDD 워크플로우
-
-각 작업은 다음 순서로 진행:
-1. **Phase 1**: 명세 작성 (@spec-designer)
-2. **Phase 2**: 테스트 설계 (@test-designer)
-3. **Phase 3**: RED - 테스트 작성 (@test-coder)
-4. **Phase 4**: GREEN - 기능 구현 (@developer)
-5. **Phase 5**: REFACTOR - 리팩토링 (@refactorer)
-
-각 단계마다 인간 검토 필요.
-
----
-
-## 🚀 다음 단계
-
-1. **현재**: Phase 0 완료, 인간 검토 대기
-2. **승인 후**: 작업 001 시작 → @spec-designer에게 명세 작성 요청
-3. **TDD 사이클**: RED → GREEN → REFACTOR
-4. **커밋**: 각 Phase별로 커밋 (총 3개 커밋/작업)
+- `

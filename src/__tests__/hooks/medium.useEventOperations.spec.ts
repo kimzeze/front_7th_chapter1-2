@@ -280,9 +280,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
       },
     ];
 
-    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(
-      mockEvents
-    );
+    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(mockEvents);
 
     const { result } = renderHook(() => useEventOperations(false));
 
@@ -305,9 +303,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
     });
 
     // generateRecurringEvents 호출 확인
-    expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledWith(
-      weeklyEvent
-    );
+    expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledWith(weeklyEvent);
     expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledTimes(1);
     // 스낵바 메시지 확인
     expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 추가되었습니다.', {
@@ -379,9 +375,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
       },
     ];
 
-    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(
-      mockEvents
-    );
+    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(mockEvents);
 
     // 2번째 POST 호출에서 실패 시뮬레이션
     let postCallCount = 0;
@@ -391,10 +385,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
         if (postCallCount === 2) {
           return new HttpResponse(null, { status: 500 });
         }
-        return new HttpResponse(
-          JSON.stringify({ success: true }),
-          { status: 200 }
-        );
+        return new HttpResponse(JSON.stringify({ success: true }), { status: 200 });
       })
     );
 
@@ -429,9 +420,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
   // TC-008: 빈 배열 반환 (반복 종료일이 시작일보다 이전)
   it('반복 생성 결과가 빈 배열이면 API 호출을 하지 않는다', async () => {
     // Mock: 빈 배열 반환
-    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(
-      []
-    );
+    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce([]);
 
     setupMockHandlerCreation();
 
@@ -456,9 +445,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
     });
 
     // generateRecurringEvents 호출됨
-    expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledWith(
-      invalidEvent
-    );
+    expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledWith(invalidEvent);
     // 스낵바 메시지 확인
     expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 추가되었습니다.', {
       variant: 'success',
