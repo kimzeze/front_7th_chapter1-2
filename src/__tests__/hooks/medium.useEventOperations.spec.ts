@@ -54,7 +54,7 @@ it('저장되어있는 초기 이벤트 데이터를 적절하게 불러온다',
 });
 
 it('정의된 이벤트 정보를 기준으로 적절하게 저장이 된다', async () => {
-  setupMockHandlerCreation(); // ? Med: 이걸 왜 써야하는지 물어보자
+  server.use(...setupMockHandlerCreation()); // 핸들러 배열을 스프레드로 전달
 
   const { result } = renderHook(() => useEventOperations(false));
 
@@ -81,7 +81,7 @@ it('정의된 이벤트 정보를 기준으로 적절하게 저장이 된다', a
 });
 
 it("새로 정의된 'title', 'endTime' 기준으로 적절하게 일정이 업데이트 된다", async () => {
-  setupMockHandlerUpdating();
+  server.use(...setupMockHandlerUpdating());
 
   const { result } = renderHook(() => useEventOperations(true));
 
@@ -108,7 +108,7 @@ it("새로 정의된 'title', 'endTime' 기준으로 적절하게 일정이 업�
 });
 
 it('존재하는 이벤트 삭제 시 에러없이 아이템이 삭제된다.', async () => {
-  setupMockHandlerDeletion();
+  server.use(...setupMockHandlerDeletion());
 
   const { result } = renderHook(() => useEventOperations(false));
 
@@ -190,7 +190,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
 
   // TC-001: 단일 이벤트 저장 (기존 로직 유지)
   it('반복 없는 단일 이벤트는 API에 1개만 저장된다', async () => {
-    setupMockHandlerCreation();
+    server.use(...setupMockHandlerCreation());
 
     const { result } = renderHook(() => useEventOperations(false));
 
@@ -222,7 +222,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
 
   // TC-002: 매주 반복 이벤트 저장 (핵심)
   it('매주 반복 설정된 이벤트는 여러 이벤트가 생성되어 순차적으로 저장된다', async () => {
-    setupMockHandlerCreation();
+    server.use(...setupMockHandlerCreation());
 
     // Mock 반환값 설정: 4개의 이벤트
     const mockEvents: Event[] = [
@@ -313,7 +313,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
 
   // TC-007: 수정 모드에서 반복 생성 로직 미적용
   it('수정 모드에서는 반복 생성 로직이 미적용되고 단일 이벤트만 수정된다', async () => {
-    setupMockHandlerUpdating();
+    server.use(...setupMockHandlerUpdating());
 
     const { result } = renderHook(() => useEventOperations(true));
 
@@ -422,7 +422,7 @@ describe('반복 이벤트 저장 (작업 008)', () => {
     // Mock: 빈 배열 반환
     vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce([]);
 
-    setupMockHandlerCreation();
+    server.use(...setupMockHandlerCreation());
 
     const { result } = renderHook(() => useEventOperations(false));
 
@@ -462,7 +462,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
   describe('반복 이벤트 단일 수정', () => {
     // TC-001: editOption === 'single'일 때 repeat.type을 'none'으로 변경
     it('TC-001: editOption === "single"일 때 수정이 성공하고 스낵바가 표시된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -494,7 +494,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
 
     // TC-002: repeatParentId가 제거됨 (간소화)
     it('TC-002: 단일 수정 시 정상적으로 수정된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -528,7 +528,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
   describe('단일 이벤트 수정 (repeatParentId 없음)', () => {
     // TC-003: repeatParentId 없는 경우 기존 로직 유지
     it('TC-003: repeatParentId가 없는 단일 이벤트는 기존 로직대로 수정된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -562,7 +562,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
   describe('editOption이 null 또는 undefined인 경우', () => {
     // TC-004: editOption이 null이면 기존 로직 수행
     it('TC-004: editOption이 undefined이면 정상적으로 수정된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -596,7 +596,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
   describe('editOption === "all" (작업 014 대비)', () => {
     // TC-005: editOption === 'all'이면 현재는 기존 로직 수행
     it('TC-005: editOption === "all"일 때 현재는 단일 이벤트만 수정된다 (작업 014 대비)', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -669,7 +669,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
   describe('통합 시나리오', () => {
     // TC-007: 반복 이벤트 단일 수정 후 다시 수정
     it('TC-007: 단일 수정으로 분리된 이벤트를 다시 수정할 때 정상 동작한다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -735,7 +735,7 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
   describe('반복 이벤트 전체 수정', () => {
     // TC-001: editOption === 'all'일 때 같은 그룹의 모든 이벤트가 수정됨
     it('TC-001: editOption === "all"일 때 같은 그룹의 모든 이벤트가 수정된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -767,7 +767,7 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
 
     // TC-002: 각 이벤트의 날짜는 원본 유지
     it('TC-002: 전체 수정 시 각 이벤트의 날짜는 원본 유지된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -801,7 +801,7 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
   describe('repeatParentId 없는 경우', () => {
     // TC-003: repeatParentId가 없으면 기존 로직 수행
     it('TC-003: repeatParentId가 없으면 기존 로직으로 수정된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -835,7 +835,7 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
   describe('단일 이벤트만 있는 그룹', () => {
     // TC-004: 같은 그룹에 1개만 있어도 정상 동작
     it('TC-004: 같은 그룹에 1개만 있어도 정상적으로 수정된다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 
@@ -961,7 +961,7 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
   describe('통합 시나리오', () => {
     // TC-006: 전체 수정 후 단일 수정 가능
     it('TC-006: 전체 수정 후 다시 단일 수정을 할 수 있다', async () => {
-      setupMockHandlerUpdating();
+      server.use(...setupMockHandlerUpdating());
 
       const { result } = renderHook(() => useEventOperations(true));
 

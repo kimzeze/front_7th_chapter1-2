@@ -1,94 +1,105 @@
 import { http, HttpResponse } from 'msw';
 
-import { server } from '../setupTests';
+import { events as defaultEvents } from '../__mocks__/response/events.json';
 import { Event } from '../types';
 
-// ! Hard 여기 제공 안함
-export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
-  const mockEvents: Event[] = [...initEvents];
+/**
+ * 테스트용 MSW 핸들러 팩토리
+ *
+ * @description
+ * chapter1-1의 검증된 패턴 사용:
+ * - 핸들러 배열 반환 (server.use() 직접 호출 X)
+ * - 클로저로 독립적인 events 배열 관리
+ * - 테스트 격리 보장
+ */
 
-  server.use(
-    http.get('/api/events', () => {
-      return HttpResponse.json({ events: mockEvents });
-    }),
+const generateId = () => String(Date.now());
+const findEventIndex = (events: Event[], id: string) => events.findIndex((e) => e.id === id);
+const notFoundResponse = () => HttpResponse.json({ error: 'Event not found' }, { status: 404 });
+
+const createGetHandler = (events: Event[]) => {
+  return http.get('/api/events', () => {
+    return HttpResponse.json({ events: [...events] });
+  });
+};
+
+/**
+ * 이벤트 생성 테스트용 핸들러
+ *
+ * @param initEvents 초기 이벤트 배열
+ * @returns MSW 핸들러 배열
+ */
+export const setupMockHandlerCreation = (initEvents: Event[] = []) => {
+  const events = [...initEvents];
+
+  return [
+    createGetHandler(events),
+
     http.post('/api/events', async ({ request }) => {
       const newEvent = (await request.json()) as Event;
-      newEvent.id = String(mockEvents.length + 1); // 간단한 ID 생성
-      mockEvents.push(newEvent);
-      return HttpResponse.json(newEvent, { status: 201 });
-    })
-  );
+      const eventWithId: Event = {
+        ...newEvent,
+        id: newEvent.id || generateId(),
+      };
+
+      events.push(eventWithId);
+      return HttpResponse.json(eventWithId, { status: 201 });
+    }),
+  ];
 };
 
-export const setupMockHandlerUpdating = () => {
-  const mockEvents: Event[] = [
-    {
-      id: '1',
-      title: '기존 회의',
-      date: '2025-10-15',
-      startTime: '09:00',
-      endTime: '10:00',
-      description: '기존 팀 미팅',
-      location: '회의실 B',
-      category: '업무',
-      repeat: { type: 'none', interval: 0 },
-      notificationTime: 10,
-    },
-    {
-      id: '2',
-      title: '기존 회의2',
-      date: '2025-10-15',
-      startTime: '11:00',
-      endTime: '12:00',
-      description: '기존 팀 미팅 2',
-      location: '회의실 C',
-      category: '업무',
-      repeat: { type: 'none', interval: 0 },
-      notificationTime: 10,
-    },
-  ];
+/**
+ * 이벤트 수정 테스트용 핸들러
+ *
+ * @param initEvents 초기 이벤트 배열 (기본값: events.json)
+ * @returns MSW 핸들러 배열
+ */
+export const setupMockHandlerUpdating = (initEvents: Event[] = defaultEvents as Event[]) => {
+  const events = [...initEvents];
 
-  server.use(
-    http.get('/api/events', () => {
-      return HttpResponse.json({ events: mockEvents });
-    }),
+  return [
+    createGetHandler(events),
+
     http.put('/api/events/:id', async ({ params, request }) => {
-      const { id } = params;
-      const updatedEvent = (await request.json()) as Event;
-      const index = mockEvents.findIndex((event) => event.id === id);
+      const { id } = params as { id: string };
+      const updatedData = (await request.json()) as Partial<Event>;
 
-      mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
-      return HttpResponse.json(mockEvents[index]);
-    })
-  );
-};
+      const index = findEventIndex(events, id);
+      if (index === -1) {
+        return notFoundResponse();
+      }
 
-export const setupMockHandlerDeletion = () => {
-  const mockEvents: Event[] = [
-    {
-      id: '1',
-      title: '삭제할 이벤트',
-      date: '2025-10-15',
-      startTime: '09:00',
-      endTime: '10:00',
-      description: '삭제할 이벤트입니다',
-      location: '어딘가',
-      category: '기타',
-      repeat: { type: 'none', interval: 0 },
-      notificationTime: 10,
-    },
-  ];
-
-  server.use(
-    http.get('/api/events', () => {
-      return HttpResponse.json({ events: mockEvents });
+      events[index] = { ...events[index], ...updatedData };
+      return HttpResponse.json(events[index]);
     }),
-    http.delete('/api/events/:id', ({ params }) => {
-      const { id } = params;
-      const index = mockEvents.findIndex((event) => event.id === id);
-
-      mockEvents.splice(index, 1);
-      return new HttpResponse(null, { status: 204 });
-    })
-  );
+  ];
 };
+
+/**
+ * 이벤트 삭제 테스트용 핸들러
+ *
+ * @param initEvents 초기 이벤트 배열 (기본값: events.json)
+ * @returns MSW 핸들러 배열
+ */
+export const setupMockHandlerDeletion = (initEvents: Event[] = defaultEvents as Event[]) => {
+  const events = [...initEvents];
+
+  return [
+    createGetHandler(events),
+
+    http.delete('/api/events/:id', ({ params }) => {
+      const { id } = params as { id: string };
+
+      const index = findEventIndex(events, id);
+      if (index === -1) {
+        return notFoundResponse();
+      }
+
+      events.splice(index, 1);
+      return HttpResponse.json({ success: true });
+    }),
+  ];
+};
+
+// 작업 015용 별칭 (명확성을 위해 유지)
+export const setupMockHandlerForDelete = setupMockHandlerDeletion;

@@ -115,7 +115,10 @@ function App() {
   const [overlappingEvents, setOverlappingEvents] = useState<Event[]>([]);
   const [editRepeatDialogOpen, setEditRepeatDialogOpen] = useState(false);
   const [editingEventForRepeat, setEditingEventForRepeat] = useState<Event | null>(null);
-  const [editOption, setEditOption] = useState<'single' | 'all' | null>(null);
+  const [editOption, setEditOption] = useState<'single' | 'all' | null>(null); // 작업 013/014에서 사용
+  const [deleteRepeatDialogOpen, setDeleteRepeatDialogOpen] = useState(false);
+  const [deletingEventForRepeat, setDeletingEventForRepeat] = useState<Event | null>(null);
+  const [deleteOption, setDeleteOption] = useState<'single' | 'all' | null>(null); // 작업 016/017에서 사용
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -628,7 +631,19 @@ function App() {
                     >
                       <Edit />
                     </IconButton>
-                    <IconButton aria-label="Delete event" onClick={() => deleteEvent(event.id)}>
+                    <IconButton
+                      aria-label="Delete event"
+                      onClick={() => {
+                        if (event.repeatParentId) {
+                          // 반복 일정: 다이얼로그 표시
+                          setDeletingEventForRepeat(event);
+                          setDeleteRepeatDialogOpen(true);
+                        } else {
+                          // 단일 일정: 바로 삭제
+                          deleteEvent(event.id);
+                        }
+                      }}
+                    >
                       <Delete />
                     </IconButton>
                   </Stack>
@@ -723,6 +738,55 @@ function App() {
               setEditRepeatDialogOpen(false);
               setEditingEventForRepeat(null);
               setEditOption(null);
+            }}
+          >
+            취소
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 반복 일정 삭제 확인 다이얼로그 (작업 015) */}
+      <Dialog
+        open={deleteRepeatDialogOpen}
+        onClose={() => {
+          setDeleteRepeatDialogOpen(false);
+          setDeletingEventForRepeat(null);
+          setDeleteOption(null);
+        }}
+      >
+        <DialogTitle>반복 일정 삭제</DialogTitle>
+        <DialogContent>
+          <DialogContentText>해당 일정만 삭제하시겠어요?</DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              if (deletingEventForRepeat) {
+                setDeleteOption('single');
+                deleteEvent(deletingEventForRepeat.id);
+                setDeleteRepeatDialogOpen(false);
+              }
+            }}
+          >
+            이 일정만
+          </Button>
+          <Button
+            onClick={() => {
+              if (deletingEventForRepeat) {
+                setDeleteOption('all');
+                deleteEvent(deletingEventForRepeat.id);
+                setDeleteRepeatDialogOpen(false);
+              }
+            }}
+            variant="contained"
+          >
+            전체 반복
+          </Button>
+          <Button
+            onClick={() => {
+              setDeleteRepeatDialogOpen(false);
+              setDeletingEventForRepeat(null);
+              setDeleteOption(null);
             }}
           >
             취소

@@ -1,6 +1,6 @@
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render, screen, within, act } from '@testing-library/react';
+import { render, screen, within, act, waitFor } from '@testing-library/react';
 import { UserEvent, userEvent } from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { SnackbarProvider } from 'notistack';
@@ -10,10 +10,12 @@ import {
   setupMockHandlerCreation,
   setupMockHandlerDeletion,
   setupMockHandlerUpdating,
+  setupMockHandlerForDelete,
 } from '../__mocks__/handlersUtils';
 import App from '../App';
 import { server } from '../setupTests';
 import { Event } from '../types';
+import { createSingleEvent, createRecurringEvent } from './utils';
 
 const theme = createTheme();
 
@@ -558,33 +560,11 @@ describe('반복 종료일 Validation', () => {
 describe('반복 일정 삭제 (작업 015)', () => {
   describe('다이얼로그 표시 조건', () => {
     it('TC-001: 단일 이벤트 삭제 시 다이얼로그가 표시되지 않는다', async () => {
-      // Arrange: 단일 이벤트만 있는 목 데이터
-      const singleEvent: Event = {
-        id: 'single-1',
-        title: '단일 회의',
-        date: '2025-11-01',
-        startTime: '10:00',
-        endTime: '11:00',
-        description: '',
-        location: '회의실',
-        category: '업무',
-        repeat: { type: 'none', interval: 1 },
-        notificationTime: 10,
-        // repeatParentId 없음
-      };
-
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events: [singleEvent] });
-        })
-      );
-
-      setupMockHandlerDeletion();
-
+      // Arrange: 기본 events.json 데이터 사용 (단일 이벤트, repeatParentId 없음)
       const { user } = setup(<App />);
 
-      // 이벤트 로딩 대기
-      await screen.findByText('단일 회의');
+      // 이벤트 로딩 대기 (events.json의 "기존 회의")
+      await screen.findAllByText('기존 회의');
 
       // Act: Delete 버튼 클릭
       const deleteButton = screen.getByLabelText('Delete event');
@@ -595,31 +575,19 @@ describe('반복 일정 삭제 (작업 015)', () => {
     });
 
     it('TC-002: 반복 이벤트 삭제 시 다이얼로그가 표시된다', async () => {
-      // Arrange: 반복 이벤트가 있는 목 데이터
-      const recurringEvent: Event = {
+      // Arrange: 반복 이벤트가 있는 목 데이터 (Factory 패턴)
+      // 날짜를 10월로 설정 (setupTests.ts에서 시스템 시간이 2025-10-01)
+      const recurringEvent = createRecurringEvent('parent-weekly', { 
         id: 'rec-1',
-        title: '주간 회의',
-        date: '2025-11-01',
-        startTime: '10:00',
-        endTime: '11:00',
-        description: '',
-        location: '회의실',
-        category: '업무',
-        repeat: { type: 'weekly', interval: 1 },
-        notificationTime: 10,
-        repeatParentId: 'parent-weekly',
-      };
+        date: '2025-10-15'
+      });
 
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events: [recurringEvent] });
-        })
-      );
+      server.use(...setupMockHandlerForDelete([recurringEvent]));
 
       const { user } = setup(<App />);
 
-      // 이벤트 로딩 대기
-      await screen.findByText('주간 회의');
+      // 이벤트 로딩 대기 (캘린더와 이벤트 리스트 모두에 표시될 수 있음)
+      await screen.findAllByText('주간 회의');
 
       // Act: Delete 버튼 클릭
       const deleteButton = screen.getByLabelText('Delete event');
@@ -638,32 +606,14 @@ describe('반복 일정 삭제 (작업 015)', () => {
 
   describe('다이얼로그 버튼 동작', () => {
     it('TC-003: "이 일정만" 버튼 클릭 시 다이얼로그가 닫히고 단일 삭제된다', async () => {
-      // Arrange: 반복 이벤트
-      const recurringEvent: Event = {
-        id: 'rec-1',
-        title: '주간 회의',
-        date: '2025-11-01',
-        startTime: '10:00',
-        endTime: '11:00',
-        description: '',
-        location: '회의실',
-        category: '업무',
-        repeat: { type: 'weekly', interval: 1 },
-        notificationTime: 10,
-        repeatParentId: 'parent-weekly',
-      };
+      // Arrange: 반복 이벤트 (Factory 패턴)
+      const recurringEvent = createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-15' });
 
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events: [recurringEvent] });
-        })
-      );
-
-      setupMockHandlerDeletion();
+      server.use(...setupMockHandlerForDelete([recurringEvent]));
 
       const { user } = setup(<App />);
 
-      await screen.findByText('주간 회의');
+      await screen.findAllByText('주간 회의');
 
       // 다이얼로그 열기
       const deleteButton = screen.getByLabelText('Delete event');
@@ -673,52 +623,24 @@ describe('반복 일정 삭제 (작업 015)', () => {
       const singleButton = screen.getByRole('button', { name: /이 일정만/ });
       await user.click(singleButton);
 
-      // Assert: 다이얼로그 닫힘
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // Assert: 다이얼로그 닫힘 (비동기 처리 대기)
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
     });
 
     it('TC-004: "전체 반복" 버튼 클릭 시 다이얼로그가 닫히고 전체 삭제된다', async () => {
-      // Arrange: 같은 repeatParentId를 가진 여러 이벤트
-      const recurringEvents: Event[] = [
-        {
-          id: 'rec-1',
-          title: '주간 회의',
-          date: '2025-11-01',
-          startTime: '10:00',
-          endTime: '11:00',
-          description: '',
-          location: '회의실',
-          category: '업무',
-          repeat: { type: 'weekly', interval: 1 },
-          notificationTime: 10,
-          repeatParentId: 'parent-weekly',
-        },
-        {
-          id: 'rec-2',
-          title: '주간 회의',
-          date: '2025-11-08',
-          startTime: '10:00',
-          endTime: '11:00',
-          description: '',
-          location: '회의실',
-          category: '업무',
-          repeat: { type: 'weekly', interval: 1 },
-          notificationTime: 10,
-          repeatParentId: 'parent-weekly',
-        },
+      // Arrange: 같은 repeatParentId를 가진 여러 이벤트 (Factory 패턴)
+      const recurringEvents = [
+        createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-08' }),
+        createRecurringEvent('parent-weekly', { id: 'rec-2', date: '2025-10-15' }),
       ];
 
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events: recurringEvents });
-        })
-      );
-
-      setupMockHandlerDeletion();
+      server.use(...setupMockHandlerForDelete(recurringEvents));
 
       const { user } = setup(<App />);
 
-      await screen.findByText('주간 회의');
+      await screen.findAllByText('주간 회의');
 
       // 첫 번째 이벤트의 Delete 버튼 클릭
       const deleteButtons = screen.getAllByLabelText('Delete event');
@@ -728,35 +650,21 @@ describe('반복 일정 삭제 (작업 015)', () => {
       const allButton = screen.getByRole('button', { name: /전체 반복/ });
       await user.click(allButton);
 
-      // Assert: 다이얼로그 닫힘
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // Assert: 다이얼로그 닫힘 (비동기 처리 대기)
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
     });
 
     it('TC-005: "취소" 버튼 클릭 시 다이얼로그만 닫히고 삭제되지 않는다', async () => {
-      // Arrange: 반복 이벤트
-      const recurringEvent: Event = {
-        id: 'rec-1',
-        title: '주간 회의',
-        date: '2025-11-01',
-        startTime: '10:00',
-        endTime: '11:00',
-        description: '',
-        location: '회의실',
-        category: '업무',
-        repeat: { type: 'weekly', interval: 1 },
-        notificationTime: 10,
-        repeatParentId: 'parent-weekly',
-      };
+      // Arrange: 반복 이벤트 (Factory 패턴)
+      const recurringEvent = createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-15' });
 
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events: [recurringEvent] });
-        })
-      );
+      server.use(...setupMockHandlerForDelete([recurringEvent]));
 
       const { user } = setup(<App />);
 
-      await screen.findByText('주간 회의');
+      await screen.findAllByText('주간 회의');
 
       // 다이얼로그 열기
       const deleteButton = screen.getByLabelText('Delete event');
@@ -766,40 +674,26 @@ describe('반복 일정 삭제 (작업 015)', () => {
       const cancelButton = screen.getByRole('button', { name: /취소/ });
       await user.click(cancelButton);
 
-      // Assert: 다이얼로그 닫힘
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // Assert: 다이얼로그 닫힘 (비동기 처리 대기)
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
 
       // Assert: 이벤트 여전히 존재
-      expect(screen.getByText('주간 회의')).toBeInTheDocument();
+      expect(screen.getAllByText('주간 회의').length).toBeGreaterThan(0);
     });
   });
 
   describe('경계값 및 예외 케이스', () => {
     it('TC-006: ESC 키 또는 외부 클릭 시 다이얼로그가 닫힌다', async () => {
-      // Arrange: 반복 이벤트
-      const recurringEvent: Event = {
-        id: 'rec-1',
-        title: '주간 회의',
-        date: '2025-11-01',
-        startTime: '10:00',
-        endTime: '11:00',
-        description: '',
-        location: '회의실',
-        category: '업무',
-        repeat: { type: 'weekly', interval: 1 },
-        notificationTime: 10,
-        repeatParentId: 'parent-weekly',
-      };
+      // Arrange: 반복 이벤트 (Factory 패턴)
+      const recurringEvent = createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-15' });
 
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events: [recurringEvent] });
-        })
-      );
+      server.use(...setupMockHandlerForDelete([recurringEvent]));
 
       const { user } = setup(<App />);
 
-      await screen.findByText('주간 회의');
+      await screen.findAllByText('주간 회의');
 
       // 다이얼로그 열기
       const deleteButton = screen.getByLabelText('Delete event');
@@ -811,67 +705,23 @@ describe('반복 일정 삭제 (작업 015)', () => {
       // Act: ESC 키 입력
       await user.keyboard('{Escape}');
 
-      // Assert: 다이얼로그 닫힘
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      // Assert: 다이얼로그 닫힘 (비동기 처리 대기)
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      });
     });
   });
 
   describe('통합 시나리오', () => {
     it('TC-007: 반복 이벤트를 여러 번 단일 삭제할 수 있다', async () => {
-      // Arrange: 같은 repeatParentId를 가진 3개 이벤트
-      const recurringEvents: Event[] = [
-        {
-          id: 'rec-1',
-          title: '주간 회의',
-          date: '2025-11-01',
-          startTime: '10:00',
-          endTime: '11:00',
-          description: '',
-          location: '회의실',
-          category: '업무',
-          repeat: { type: 'weekly', interval: 1 },
-          notificationTime: 10,
-          repeatParentId: 'parent-weekly',
-        },
-        {
-          id: 'rec-2',
-          title: '주간 회의',
-          date: '2025-11-08',
-          startTime: '10:00',
-          endTime: '11:00',
-          description: '',
-          location: '회의실',
-          category: '업무',
-          repeat: { type: 'weekly', interval: 1 },
-          notificationTime: 10,
-          repeatParentId: 'parent-weekly',
-        },
-        {
-          id: 'rec-3',
-          title: '주간 회의',
-          date: '2025-11-15',
-          startTime: '10:00',
-          endTime: '11:00',
-          description: '',
-          location: '회의실',
-          category: '업무',
-          repeat: { type: 'weekly', interval: 1 },
-          notificationTime: 10,
-          repeatParentId: 'parent-weekly',
-        },
+      // Arrange: 같은 repeatParentId를 가진 3개 이벤트 (Factory 패턴)
+      const recurringEvents = [
+        createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-08' }),
+        createRecurringEvent('parent-weekly', { id: 'rec-2', date: '2025-10-15' }),
+        createRecurringEvent('parent-weekly', { id: 'rec-3', date: '2025-10-22' }),
       ];
 
-      let events = [...recurringEvents];
-
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events });
-        }),
-        http.delete('/api/events/:id', ({ params }) => {
-          events = events.filter((e) => e.id !== params.id);
-          return HttpResponse.json({ success: true });
-        })
-      );
+      server.use(...setupMockHandlerForDelete(recurringEvents));
 
       const { user } = setup(<App />);
 
@@ -898,48 +748,18 @@ describe('반복 일정 삭제 (작업 015)', () => {
     });
 
     it('TC-008: 단일 이벤트 삭제 후 반복 이벤트 삭제 시 다이얼로그가 표시된다', async () => {
-      // Arrange: 단일 + 반복 이벤트
-      const mixedEvents: Event[] = [
-        {
-          id: 'single-1',
-          title: '단일 회의',
-          date: '2025-11-01',
-          startTime: '10:00',
-          endTime: '11:00',
-          description: '',
-          location: '회의실',
-          category: '업무',
-          repeat: { type: 'none', interval: 1 },
-          notificationTime: 10,
-          // repeatParentId 없음
-        },
-        {
-          id: 'rec-1',
-          title: '주간 회의',
-          date: '2025-11-08',
-          startTime: '10:00',
-          endTime: '11:00',
-          description: '',
-          location: '회의실',
-          category: '업무',
-          repeat: { type: 'weekly', interval: 1 },
-          notificationTime: 10,
-          repeatParentId: 'parent-weekly',
-        },
+      // Arrange: 단일 + 반복 이벤트 (Factory 패턴)
+      const mixedEvents = [
+        createSingleEvent({ id: 'single-1', date: '2025-10-08' }),
+        createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-15' }),
       ];
 
-      server.use(
-        http.get('/api/events', () => {
-          return HttpResponse.json({ events: mixedEvents });
-        })
-      );
-
-      setupMockHandlerDeletion();
+      server.use(...setupMockHandlerForDelete(mixedEvents));
 
       const { user } = setup(<App />);
 
-      await screen.findByText('단일 회의');
-      await screen.findByText('주간 회의');
+      await screen.findAllByText('단일 회의');
+      await screen.findAllByText('주간 회의');
 
       // Act 1: 단일 이벤트 삭제 (다이얼로그 없음)
       const deleteButtons = screen.getAllByLabelText('Delete event');
