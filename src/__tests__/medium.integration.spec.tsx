@@ -577,9 +577,9 @@ describe('반복 일정 삭제 (작업 015)', () => {
     it('TC-002: 반복 이벤트 삭제 시 다이얼로그가 표시된다', async () => {
       // Arrange: 반복 이벤트가 있는 목 데이터 (Factory 패턴)
       // 날짜를 10월로 설정 (setupTests.ts에서 시스템 시간이 2025-10-01)
-      const recurringEvent = createRecurringEvent('parent-weekly', { 
+      const recurringEvent = createRecurringEvent('parent-weekly', {
         id: 'rec-1',
-        date: '2025-10-15'
+        date: '2025-10-15',
       });
 
       server.use(...setupMockHandlerForDelete([recurringEvent]));
@@ -607,7 +607,10 @@ describe('반복 일정 삭제 (작업 015)', () => {
   describe('다이얼로그 버튼 동작', () => {
     it('TC-003: "이 일정만" 버튼 클릭 시 다이얼로그가 닫히고 단일 삭제된다', async () => {
       // Arrange: 반복 이벤트 (Factory 패턴)
-      const recurringEvent = createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-15' });
+      const recurringEvent = createRecurringEvent('parent-weekly', {
+        id: 'rec-1',
+        date: '2025-10-15',
+      });
 
       server.use(...setupMockHandlerForDelete([recurringEvent]));
 
@@ -658,7 +661,10 @@ describe('반복 일정 삭제 (작업 015)', () => {
 
     it('TC-005: "취소" 버튼 클릭 시 다이얼로그만 닫히고 삭제되지 않는다', async () => {
       // Arrange: 반복 이벤트 (Factory 패턴)
-      const recurringEvent = createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-15' });
+      const recurringEvent = createRecurringEvent('parent-weekly', {
+        id: 'rec-1',
+        date: '2025-10-15',
+      });
 
       server.use(...setupMockHandlerForDelete([recurringEvent]));
 
@@ -687,7 +693,10 @@ describe('반복 일정 삭제 (작업 015)', () => {
   describe('경계값 및 예외 케이스', () => {
     it('TC-006: ESC 키 또는 외부 클릭 시 다이얼로그가 닫힌다', async () => {
       // Arrange: 반복 이벤트 (Factory 패턴)
-      const recurringEvent = createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-15' });
+      const recurringEvent = createRecurringEvent('parent-weekly', {
+        id: 'rec-1',
+        date: '2025-10-15',
+      });
 
       server.use(...setupMockHandlerForDelete([recurringEvent]));
 
