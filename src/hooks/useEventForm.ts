@@ -1,6 +1,7 @@
 import { ChangeEvent, useState } from 'react';
 
 import { Event, RepeatType } from '../types';
+import { MAX_DATE } from '../utils/recurringEventUtils';
 import { getTimeErrorMessage } from '../utils/timeValidation';
 
 type TimeErrorRecord = Record<'startTimeError' | 'endTimeError', string | null>;
@@ -51,7 +52,7 @@ export const useEventForm = (initialEvent?: Event) => {
 
     const end = new Date(endDate);
     const start = new Date(startDate);
-    const maxDate = new Date('2025-12-31');
+    const maxDate = new Date(MAX_DATE);
 
     // 1. 시작일보다 이전 체크
     if (end < start) {
@@ -60,7 +61,7 @@ export const useEventForm = (initialEvent?: Event) => {
 
     // 2. MAX_DATE 초과 체크
     if (end > maxDate) {
-      return '종료일은 2025-12-31 이하여야 합니다.';
+      return `종료일은 ${MAX_DATE} 이하여야 합니다.`;
     }
 
     return null;

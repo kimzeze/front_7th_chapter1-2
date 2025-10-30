@@ -87,13 +87,13 @@ it('엣지 케이스를 처리한다', () => {});
 // ❌ 나쁜 예 - 유지보수 어려움
 it('매월 30일에 반복된다', () => {
   const result = generateMonthlyEvents(baseEvent);
-  
+
   expect(result[0].date).toBe('2025-01-30');
   expect(result[1].date).toBe('2025-03-30');
   expect(result[2].date).toBe('2025-04-30');
   expect(result[3].date).toBe('2025-05-30');
   // ... 11줄 더
-  
+
   // 문제점:
   // - 반복적
   // - 개수 변경 시 깨짐
@@ -109,20 +109,20 @@ it('매월 30일에 반복된다', () => {
 // ✅ 좋은 예 - 패턴으로 검증
 it('매월 30일에 반복되고 30일이 없는 달은 건너뛴다', () => {
   const result = generateMonthlyEvents(baseEvent);
-  
+
   // 개수 확인
   expect(result).toHaveLength(11); // 2월 제외 11개월
-  
+
   // 모든 날짜가 30일인지 패턴 검증
-  result.forEach(event => {
+  result.forEach((event) => {
     const day = event.date.split('-')[2];
     expect(day).toBe('30');
   });
-  
+
   // 2월이 없는지 확인
-  const months = result.map(e => e.date.split('-')[1]);
+  const months = result.map((e) => e.date.split('-')[1]);
   expect(months).not.toContain('02');
-  
+
   // 장점:
   // - 검증 의도 명확 (30일 + 2월 제외)
   // - 개수 변경에 강함
@@ -134,10 +134,10 @@ it('매월 30일에 반복되고 30일이 없는 달은 건너뛴다', () => {
 
 ```typescript
 // 전략 1: forEach로 공통 패턴 확인
-result.forEach(item => expect(item.property).toBe(expected));
+result.forEach((item) => expect(item.property).toBe(expected));
 
 // 전략 2: map으로 추출 후 검증
-const values = result.map(item => item.key);
+const values = result.map((item) => item.key);
 expect(values).toContain('expected');
 expect(values).not.toContain('excluded');
 

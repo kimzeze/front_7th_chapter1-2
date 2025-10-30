@@ -198,14 +198,14 @@ it('테스트 설명', () => {
 // ❌ 나쁜 예 - 깨지기 쉽고 반복적
 it('매월 30일에 반복된다', () => {
   const result = generateMonthlyEvents(baseEvent);
-  
+
   expect(result[0].date).toBe('2025-01-30');
   expect(result[1].date).toBe('2025-03-30');
   expect(result[2].date).toBe('2025-04-30');
   expect(result[3].date).toBe('2025-05-30');
   expect(result[4].date).toBe('2025-06-30');
   // ... 6줄 더
-  
+
   // 문제점:
   // - 중간값 하나하나 체크 = 반복적, 의도 불명확
   // - 개수 변경 시 모두 수정 필요
@@ -219,20 +219,20 @@ it('매월 30일에 반복된다', () => {
 // ✅ 좋은 예 - 패턴으로 검증
 it('매월 30일에 반복되고 30일이 없는 달은 건너뛴다', () => {
   const result = generateMonthlyEvents(baseEvent);
-  
+
   // 1. 개수 확인
   expect(result).toHaveLength(11); // 2월 제외
-  
+
   // 2. 패턴 확인 - 모든 날짜가 30일인지
-  result.forEach(event => {
+  result.forEach((event) => {
     const day = event.date.split('-')[2];
     expect(day).toBe('30');
   });
-  
+
   // 3. 제외 확인 - 2월이 없는지
-  const months = result.map(e => e.date.split('-')[1]);
+  const months = result.map((e) => e.date.split('-')[1]);
   expect(months).not.toContain('02');
-  
+
   // 4. 경계값만 확인 (필요시)
   expect(result[0].date).toBe('2025-01-30'); // 첫 번째
   expect(result[result.length - 1].date).toBe('2025-12-30'); // 마지막
@@ -243,12 +243,12 @@ it('매월 30일에 반복되고 30일이 없는 달은 건너뛴다', () => {
 
 ```typescript
 // 전략 1: forEach로 모든 요소 공통 패턴 확인
-result.forEach(item => {
+result.forEach((item) => {
   expect(item.someProperty).toBe(expectedValue);
 });
 
 // 전략 2: map으로 추출 후 포함/제외 확인
-const ids = result.map(item => item.id);
+const ids = result.map((item) => item.id);
 expect(ids).toContain('expected-id');
 expect(ids).not.toContain('excluded-id');
 
@@ -257,7 +257,7 @@ expect(result[0]).toMatchObject(firstExpected);
 expect(result[result.length - 1]).toMatchObject(lastExpected);
 
 // 전략 4: 중복 확인
-const uniqueIds = new Set(result.map(r => r.id));
+const uniqueIds = new Set(result.map((r) => r.id));
 expect(uniqueIds.size).toBe(result.length);
 ```
 
@@ -265,12 +265,12 @@ expect(uniqueIds.size).toBe(result.length);
 
 ```typescript
 // 연속된 날짜 확인
-const dates = result.map(e => e.date);
+const dates = result.map((e) => e.date);
 const expectedDates = ['2024-01-15', '2024-01-16', '2024-01-17'];
 expect(dates).toEqual(expectedDates);
 
 // 특정 패턴 확인 (매주 월요일)
-result.forEach(event => {
+result.forEach((event) => {
   const date = new Date(event.date);
   expect(date.getDay()).toBe(1); // 월요일
 });

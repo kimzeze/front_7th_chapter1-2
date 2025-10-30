@@ -1,6 +1,6 @@
 import { Event, EventForm, RepeatType } from '../types';
 
-const MAX_DATE = '2025-12-31';
+export const MAX_DATE = '2025-12-31';
 
 /**
  * 반복 일정 인스턴스들을 생성

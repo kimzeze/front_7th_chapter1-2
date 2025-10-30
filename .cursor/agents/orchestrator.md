@@ -554,10 +554,12 @@ docs/templates/spec-template.md 템플릿을 참고해.
 ```
 
 **❌ 금지: Import 에러를 RED로 간주하지 마세요**
+
 - 구현 파일이 없어서 import 실패 → 의미없는 실패
 - Assertion 실패를 봐야 함 → 의미있는 실패
 
 **✅ 올바른 RED: Assertion 실패**
+
 - "expect 5 events but got 0" → 5개 생성 필요
 - "expect repeatParentId defined but got undefined" → repeatParentId 추가 필요
 

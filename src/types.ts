@@ -21,4 +21,5 @@ export interface EventForm {
 
 export interface Event extends EventForm {
   id: string;
+  repeatParentId?: string; // 반복 일정 그룹을 추적하는 ID (같은 반복 일정에서 생성된 모든 인스턴스는 동일한 값을 가짐)
 }

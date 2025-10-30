@@ -305,13 +305,13 @@ const result = generateMonthlyEvents(baseEvent);
 expect(result).toHaveLength(11); // 2월 제외
 
 // 2. 패턴 - 모든 날짜가 30일
-result.forEach(event => {
+result.forEach((event) => {
   const day = event.date.split('-')[2];
   expect(day).toBe('30');
 });
 
 // 3. 제외 - 2월 없음
-const months = result.map(e => e.date.split('-')[1]);
+const months = result.map((e) => e.date.split('-')[1]);
 expect(months).not.toContain('02');
 ```
 
@@ -323,13 +323,13 @@ expect(months).not.toContain('02');
 
 ```typescript
 // 특정 일(day)이 모두 같은지
-dates.forEach(date => {
+dates.forEach((date) => {
   const day = date.split('-')[2];
   expect(day).toBe('15');
 });
 
 // 특정 월이 없는지
-const months = dates.map(d => d.split('-')[1]);
+const months = dates.map((d) => d.split('-')[1]);
 expect(months).not.toContain('02');
 expect(months).not.toContain('04');
 
@@ -349,7 +349,7 @@ for (let i = 1; i < dates.length; i++) {
 
 ```typescript
 // 모든 ID가 고유한지
-const ids = items.map(item => item.id);
+const ids = items.map((item) => item.id);
 const uniqueIds = new Set(ids);
 expect(uniqueIds.size).toBe(ids.length);
 
@@ -362,14 +362,14 @@ expect(ids).not.toContain('deleted-id');
 
 ```typescript
 // 모든 아이템이 조건 만족
-items.forEach(item => {
+items.forEach((item) => {
   expect(item.category).toBe('work');
   expect(item.status).toBe('active');
   expect(item.createdBy).toBeDefined();
 });
 
 // 특정 값 범위 확인
-prices.forEach(price => {
+prices.forEach((price) => {
   expect(price).toBeGreaterThanOrEqual(0);
   expect(price).toBeLessThanOrEqual(1000);
 });
@@ -379,13 +379,13 @@ prices.forEach(price => {
 
 ```typescript
 // 매주 월요일 확인
-result.forEach(event => {
+result.forEach((event) => {
   const date = new Date(event.date);
   expect(date.getDay()).toBe(1); // 0=일, 1=월
 });
 
 // 주말 제외 확인
-result.forEach(event => {
+result.forEach((event) => {
   const day = new Date(event.date).getDay();
   expect(day).not.toBe(0); // 일요일
   expect(day).not.toBe(6); // 토요일
@@ -415,14 +415,14 @@ expect(result[middleIndex].date).toMatch(/2024-06/);
 
 ### 검증 전략 선택 가이드
 
-| 검증 목적 | 방법 | 예시 |
-|---------|------|------|
-| 개수 확인 | `toHaveLength()` | `expect(result).toHaveLength(12)` |
-| 공통 패턴 | `forEach()` | `result.forEach(r => expect(r.day).toBe('30'))` |
-| 포함/제외 | `map()` + `toContain()` | `expect(months).not.toContain('02')` |
-| 경계값 | `[0]`, `[length-1]` | `expect(result[0].date).toBe('2024-01-01')` |
-| 순서 | `for` 루프 비교 | `expect(curr > prev).toBe(true)` |
-| 중복 | `Set` 비교 | `expect(new Set(ids).size).toBe(ids.length)` |
+| 검증 목적 | 방법                    | 예시                                            |
+| --------- | ----------------------- | ----------------------------------------------- |
+| 개수 확인 | `toHaveLength()`        | `expect(result).toHaveLength(12)`               |
+| 공통 패턴 | `forEach()`             | `result.forEach(r => expect(r.day).toBe('30'))` |
+| 포함/제외 | `map()` + `toContain()` | `expect(months).not.toContain('02')`            |
+| 경계값    | `[0]`, `[length-1]`     | `expect(result[0].date).toBe('2024-01-01')`     |
+| 순서      | `for` 루프 비교         | `expect(curr > prev).toBe(true)`                |
+| 중복      | `Set` 비교              | `expect(new Set(ids).size).toBe(ids.length)`    |
 
 ---
 
