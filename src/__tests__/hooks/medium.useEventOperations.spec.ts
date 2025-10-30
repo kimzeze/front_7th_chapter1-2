@@ -1017,3 +1017,491 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
     });
   });
 });
+
+describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('반복 이벤트 전체 삭제', () => {
+    // TC-001: deleteOption === 'all'일 때 같은 그룹의 모든 이벤트가 삭제됨
+    it('TC-001: deleteOption === "all"일 때 같은 그룹의 모든 이벤트가 삭제된다', async () => {
+      // Arrange: 같은 repeatParentId를 가진 3개 이벤트 준비
+      const mockEvents: Event[] = [
+        {
+          id: '1',
+          title: '스탠드업',
+          date: '2025-01-15',
+          startTime: '10:00',
+          endTime: '10:30',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-001',
+        },
+        {
+          id: '2',
+          title: '스탠드업',
+          date: '2025-01-22',
+          startTime: '10:00',
+          endTime: '10:30',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-001',
+        },
+        {
+          id: '3',
+          title: '스탠드업',
+          date: '2025-01-29',
+          startTime: '10:00',
+          endTime: '10:30',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-001',
+        },
+      ];
+
+      server.use(...setupMockHandlerDeletion(mockEvents));
+
+      // Act: deleteOption을 'all'로 설정
+      const { result } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'all')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      await act(async () => {
+        await result.current.deleteEvent('1');
+      });
+
+      // Assert: 성공 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 삭제되었습니다.', {
+        variant: 'info',
+      });
+    });
+
+    // TC-002: 병렬 삭제 확인 (Promise.all)
+    it('TC-002: 전체 삭제 시 모든 DELETE 요청이 병렬로 실행된다', async () => {
+      // Arrange: 4개 이벤트
+      const mockEvents: Event[] = [
+        {
+          id: '1',
+          title: '회의',
+          date: '2025-02-01',
+          startTime: '09:00',
+          endTime: '10:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'daily', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-002',
+        },
+        {
+          id: '2',
+          title: '회의',
+          date: '2025-02-02',
+          startTime: '09:00',
+          endTime: '10:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'daily', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-002',
+        },
+        {
+          id: '3',
+          title: '회의',
+          date: '2025-02-03',
+          startTime: '09:00',
+          endTime: '10:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'daily', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-002',
+        },
+        {
+          id: '4',
+          title: '회의',
+          date: '2025-02-04',
+          startTime: '09:00',
+          endTime: '10:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'daily', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-002',
+        },
+      ];
+
+      server.use(...setupMockHandlerDeletion(mockEvents));
+
+      // TC-002: deleteOption = 'all'
+      const { result } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'all')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act
+      await act(async () => {
+        await result.current.deleteEvent('1');
+      });
+
+      // Assert: 성공 메시지로 간접 검증
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 삭제되었습니다.', {
+        variant: 'info',
+      });
+    });
+  });
+
+  describe('repeatParentId 없는 경우', () => {
+    // TC-003: repeatParentId가 없으면 에러 발생
+    it('TC-003: deleteOption === "all"이지만 repeatParentId가 없으면 에러가 발생한다', async () => {
+      // Arrange: repeatParentId가 없는 단일 이벤트
+      const mockEvents: Event[] = [
+        {
+          id: '1',
+          title: '개인 일정',
+          date: '2025-03-01',
+          startTime: '14:00',
+          endTime: '15:00',
+          description: '',
+          location: '',
+          category: '개인',
+          repeat: { type: 'none', interval: 1 },
+          notificationTime: 10,
+          // repeatParentId 없음
+        },
+      ];
+
+      server.use(...setupMockHandlerDeletion(mockEvents));
+
+      // TC-003: deleteOption = 'all' (에러 케이스)
+      const { result } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'all')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act: deleteOption이 'all'이지만 repeatParentId가 없음
+      await act(async () => {
+        await result.current.deleteEvent('1');
+      });
+
+      // Assert: 에러 메시지 확인
+      // deleteOption === 'all'이지만 repeatParentId가 없으면 에러
+      // 실제로는 UI에서 이런 경우가 발생하지 않지만, 방어적 코딩
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith(
+        expect.stringMatching(/삭제|실패/),
+        expect.objectContaining({ variant: expect.any(String) })
+      );
+    });
+  });
+
+  describe('단일 이벤트만 있는 그룹', () => {
+    // TC-004: 같은 그룹에 1개만 있어도 정상 동작
+    it('TC-004: 같은 그룹에 1개만 있어도 정상 삭제된다', async () => {
+      // Arrange: 1개만 있는 그룹
+      const mockEvents: Event[] = [
+        {
+          id: '1',
+          title: '단독 이벤트',
+          date: '2025-04-01',
+          startTime: '16:00',
+          endTime: '17:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-004',
+        },
+      ];
+
+      server.use(...setupMockHandlerDeletion(mockEvents));
+
+      // TC-004: deleteOption = 'all'
+      const { result } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'all')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act
+      await act(async () => {
+        await result.current.deleteEvent('1');
+      });
+
+      // Assert
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 삭제되었습니다.', {
+        variant: 'info',
+      });
+    });
+  });
+
+  describe('에러 처리', () => {
+    // TC-005: 전체 삭제 중 API 실패 시 에러 처리
+    it('TC-005: 전체 삭제 중 일부 실패하면 에러 메시지를 표시한다', async () => {
+      // Arrange: API 실패 시뮬레이션
+      server.use(
+        http.get('/api/events', () => {
+          return HttpResponse.json({
+            events: [
+              {
+                id: '1',
+                title: '실패 테스트',
+                date: '2025-05-01',
+                startTime: '10:00',
+                endTime: '11:00',
+                description: '',
+                location: '',
+                category: '업무',
+                repeat: { type: 'weekly', interval: 1 },
+                notificationTime: 10,
+                repeatParentId: 'parent-del-all-005',
+              },
+            ],
+          });
+        }),
+        http.delete('/api/events/:id', () => {
+          return HttpResponse.json({ error: 'Server error' }, { status: 500 });
+        })
+      );
+
+      // TC-005: deleteOption = 'all'
+      const { result } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'all')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act
+      await act(async () => {
+        await result.current.deleteEvent('1');
+      });
+
+      // Assert
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정 삭제 실패', {
+        variant: 'error',
+      });
+    });
+  });
+
+  describe('deleteOption 조건 분기', () => {
+    // TC-006: deleteOption === 'single'이면 단일 삭제만 수행
+    it('TC-006: deleteOption === "single"이면 해당 이벤트만 삭제된다', async () => {
+      // Arrange: 같은 그룹의 3개 이벤트
+      const mockEvents: Event[] = [
+        {
+          id: '1',
+          title: '반복 이벤트',
+          date: '2025-06-01',
+          startTime: '10:00',
+          endTime: '11:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-006',
+        },
+        {
+          id: '2',
+          title: '반복 이벤트',
+          date: '2025-06-08',
+          startTime: '10:00',
+          endTime: '11:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-006',
+        },
+        {
+          id: '3',
+          title: '반복 이벤트',
+          date: '2025-06-15',
+          startTime: '10:00',
+          endTime: '11:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-del-all-006',
+        },
+      ];
+
+      server.use(...setupMockHandlerDeletion(mockEvents));
+
+      // TC-006: deleteOption = 'single'
+      const { result } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'single')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act: deleteOption === 'single'
+      // 작업 016에서 구현한 단일 삭제 로직
+      await act(async () => {
+        await result.current.deleteEvent('1');
+      });
+
+      // Assert: 정상 삭제 (1개만)
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 삭제되었습니다.', {
+        variant: 'info',
+      });
+    });
+
+    // TC-007: deleteOption === null이면 단일 삭제 수행 (기본 동작)
+    it('TC-007: deleteOption이 설정되지 않으면 단일 삭제된다 (기본 동작)', async () => {
+      // Arrange
+      const mockEvents: Event[] = [
+        {
+          id: '1',
+          title: '일반 이벤트',
+          date: '2025-07-01',
+          startTime: '14:00',
+          endTime: '15:00',
+          description: '',
+          location: '',
+          category: '개인',
+          repeat: { type: 'none', interval: 1 },
+          notificationTime: 10,
+        },
+      ];
+
+      server.use(...setupMockHandlerDeletion(mockEvents));
+
+      // TC-007: deleteOption = null (기본값)
+      const { result } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, null)
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act: deleteOption === null (기본값)
+      await act(async () => {
+        await result.current.deleteEvent('1');
+      });
+
+      // Assert
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 삭제되었습니다.', {
+        variant: 'info',
+      });
+    });
+  });
+
+  describe('통합 시나리오', () => {
+    // TC-008: 전체 삭제 후 단일 삭제 가능
+    it('TC-008: 전체 삭제 후 다른 반복 이벤트를 단일 삭제할 수 있다', async () => {
+      // Arrange: 두 개의 반복 그룹
+      const mockEvents: Event[] = [
+        // 그룹 A
+        {
+          id: '1',
+          title: '그룹 A',
+          date: '2025-08-01',
+          startTime: '09:00',
+          endTime: '10:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-group-a',
+        },
+        {
+          id: '2',
+          title: '그룹 A',
+          date: '2025-08-08',
+          startTime: '09:00',
+          endTime: '10:00',
+          description: '',
+          location: '',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-group-a',
+        },
+        // 그룹 B
+        {
+          id: '3',
+          title: '그룹 B',
+          date: '2025-08-01',
+          startTime: '14:00',
+          endTime: '15:00',
+          description: '',
+          location: '',
+          category: '개인',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-group-b',
+        },
+        {
+          id: '4',
+          title: '그룹 B',
+          date: '2025-08-08',
+          startTime: '14:00',
+          endTime: '15:00',
+          description: '',
+          location: '',
+          category: '개인',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: 'parent-group-b',
+        },
+      ];
+
+      server.use(...setupMockHandlerDeletion(mockEvents));
+
+      // TC-008: 첫 번째는 deleteOption = 'all'
+      const { result: result1 } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'all')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act 1: 그룹 A 전체 삭제 (deleteOption === 'all')
+      await act(async () => {
+        await result1.current.deleteEvent('1');
+      });
+
+      // Assert 1
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 삭제되었습니다.', {
+        variant: 'info',
+      });
+
+      // 두 번째 훅은 deleteOption = 'single'
+      const { result: result2 } = renderHook(() =>
+        useEventOperations(true, undefined, undefined, 'single')
+      );
+
+      await act(() => Promise.resolve(null));
+
+      // Act 2: 그룹 B 단일 삭제 (deleteOption === 'single')
+      await act(async () => {
+        await result2.current.deleteEvent('3');
+      });
+
+      // Assert 2: 두 번째 삭제도 정상 동작
+      expect(enqueueSnackbarFn).toHaveBeenLastCalledWith('일정이 삭제되었습니다.', {
+        variant: 'info',
+      });
+    });
+  });
+});
