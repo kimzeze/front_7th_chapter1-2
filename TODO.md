@@ -88,12 +88,13 @@
 
 ### UI 개선
 
-- [ ] 010: 주간/월간 뷰에 반복 아이콘 추가
+- [x] 010: 주간/월간 뷰에 반복 아이콘 추가
 
   - 복잡도: 2/5
   - 예상: ~1시간
   - 파일: `src/App.tsx` (`renderWeekView`, `renderMonthView`)
   - 설명: `@mui/icons-material/Repeat` 아이콘 import, repeat.type !== 'none'이면 아이콘 표시
+  - ✅ 완료: 2025-10-30 (간단한 UI 추가)
 
 - [ ] 011: 이벤트 리스트에 반복 아이콘 추가
   - 복잡도: 1/5
@@ -224,6 +225,22 @@
 
 - ✅ 작업 009 완료! repeatParentId 검증 완료
 
+### 2025-10-30 (작업 010 완료!)
+
+- ✅ Phase 1 완료: 명세 작성 (docs/specs/010-repeat-icon-week-month-view.md)
+- ✅ Phase 2 완료: 테스트 설계 (docs/specs/010-test-design.md)
+- ✅ Phase 3 완료: RED/GREEN - 기능 구현
+  - Repeat 아이콘 import 추가
+  - renderWeekView()에 반복 아이콘 조건 추가
+  - renderMonthView()에 반복 아이콘 조건 추가
+  - 조건: event.repeat?.type !== 'none' && <Repeat fontSize="small" />
+  - 순서: [알림 아이콘] + [반복 아이콘] + [제목]
+  - 커밋: "feat: 주간/월간 뷰에 반복 아이콘 추가 (RED/GREEN)"
+
+- ✅ Phase 5 스킵: REFACTOR 불필요 (간단한 UI 추가)
+
+- ✅ 작업 010 완료! 주간/월간 뷰에 반복 아이콘 추가 완료
+
 ### 다음 작업
 
 - [🔄] 인간 검토 대기
@@ -233,10 +250,10 @@
 
 ## 📊 통계
 
-- **전체**: 2/17
-- **완료**: 2 ✅
+- **전체**: 3/17
+- **완료**: 3 ✅
 - **진행중**: 0 🔄
-- **대기**: 15 ⏳
+- **대기**: 14 ⏳
 
 ---
 
