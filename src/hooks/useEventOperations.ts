@@ -82,22 +82,27 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     await handleSaveSuccess('일정이 추가되었습니다.');
   };
 
+  /**
+   * 단일 수정을 위해 이벤트 데이터를 변환
+   * repeat.type을 'none'으로 변경하고 repeatParentId를 제거
+   */
+  const convertToSingleEvent = (eventData: Event | EventForm): Event | EventForm => {
+    const modifiedData: Partial<Event> = {
+      ...eventData,
+      repeat: { ...eventData.repeat, type: 'none' as const },
+    };
+    delete modifiedData.repeatParentId;
+    return modifiedData as Event | EventForm;
+  };
+
   const saveEvent = async (eventData: Event | EventForm, editOption?: 'single' | 'all') => {
     try {
       if (editing) {
         // 수정 모드
-        let dataToSave = eventData;
-
-        // 단일 수정: repeat.type을 'none'으로 변경, repeatParentId 제거
-        if (editOption === 'single' && (eventData as Event).repeatParentId) {
-          const modifiedData: Partial<Event> = {
-            ...eventData,
-            repeat: { ...eventData.repeat, type: 'none' as const },
-          };
-          // repeatParentId 제거
-          delete modifiedData.repeatParentId;
-          dataToSave = modifiedData as Event | EventForm;
-        }
+        const dataToSave =
+          editOption === 'single' && (eventData as Event).repeatParentId
+            ? convertToSingleEvent(eventData)
+            : eventData;
 
         const response = await fetch(`/api/events/${(eventData as Event).id}`, {
           method: 'PUT',
