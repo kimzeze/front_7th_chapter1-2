@@ -344,23 +344,21 @@ it('notificationTime을 10으로 하면 지정 시간 10분 전 알람 텍스트
 describe('반복 설정 UI', () => {
   it('반복 일정 체크박스가 체크되지 않으면 반복 설정 UI가 보이지 않는다', async () => {
     // Given
-    setup(<App />);
+    const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
 
     // Then
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
 
-    // 체크박스가 체크되어 있으면 해제 (다른 테스트의 영향 제거)
-    if (repeatCheckbox.getAttribute('checked') !== null) {
-      // 이미 체크되어 있을 수 있으므로 스킵
+    // 체크박스가 이미 체크되어 있다면 해제
+    if (repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
     }
 
-    // 반복 설정 UI가 보이지 않아야 함 (체크되지 않은 상태)
-    if (!repeatCheckbox.getAttribute('checked')) {
-      expect(screen.queryByLabelText('반복 유형')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('반복 간격')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('반복 종료일')).not.toBeInTheDocument();
-    }
+    // 반복 설정 UI가 보이지 않아야 함
+    expect(screen.queryByLabelText('반복 유형')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('반복 간격')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('반복 종료일')).not.toBeInTheDocument();
   });
 
   it('반복 일정 체크박스를 체크하면 반복 설정 UI가 표시된다', async () => {
@@ -368,8 +366,14 @@ describe('반복 설정 UI', () => {
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
 
-    // When
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태가 체크되어 있다면 먼저 해제
+    if (repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
+
+    // When: 체크박스 클릭
     await user.click(repeatCheckbox);
 
     // Then: findBy를 사용하여 요소가 나타날 때까지 기다리기
@@ -383,8 +387,12 @@ describe('반복 설정 UI', () => {
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
 
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    await user.click(repeatCheckbox);
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태 확인 및 체크
+    if (!repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
 
     // When
     const repeatTypeSelect = await screen.findByLabelText('반복 유형');
@@ -402,8 +410,12 @@ describe('반복 설정 UI', () => {
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
 
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    await user.click(repeatCheckbox);
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태 확인 및 체크
+    if (!repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
 
     // When
     const intervalInput = await screen.findByLabelText('반복 간격');
@@ -419,8 +431,12 @@ describe('반복 설정 UI', () => {
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
 
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    await user.click(repeatCheckbox);
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태 확인 및 체크
+    if (!repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
 
     // When
     const endDateInput = await screen.findByLabelText('반복 종료일');
@@ -443,8 +459,12 @@ describe('반복 종료일 Validation', () => {
     await user.type(dateInput, '2025-01-15');
 
     // 반복 일정 체크
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    await user.click(repeatCheckbox);
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태 확인 및 체크
+    if (!repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
 
     // When: 시작일보다 이전 날짜 입력
     const endDateInput = await screen.findByLabelText('반복 종료일');
@@ -465,8 +485,12 @@ describe('반복 종료일 Validation', () => {
     await user.type(dateInput, '2025-01-01');
 
     // 반복 일정 체크
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    await user.click(repeatCheckbox);
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태 확인 및 체크
+    if (!repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
 
     // When: MAX_DATE 초과 날짜 입력
     const endDateInput = await screen.findByLabelText('반복 종료일');
@@ -487,8 +511,12 @@ describe('반복 종료일 Validation', () => {
     await user.type(dateInput, '2025-01-01');
 
     // 반복 일정 체크
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    await user.click(repeatCheckbox);
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태 확인 및 체크
+    if (!repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
 
     // When: 유효한 날짜 입력
     const endDateInput = await screen.findByLabelText('반복 종료일');
@@ -510,8 +538,12 @@ describe('반복 종료일 Validation', () => {
     await user.type(dateInput, '2025-01-01');
 
     // 반복 일정 체크
-    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    await user.click(repeatCheckbox);
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' }) as HTMLInputElement;
+
+    // 초기 상태 확인 및 체크
+    if (!repeatCheckbox.checked) {
+      await user.click(repeatCheckbox);
+    }
 
     // When: 종료일을 입력하지 않음 (빈 값)
     await screen.findByLabelText('반복 종료일');
