@@ -74,11 +74,11 @@ describe('일정 CRUD 및 기본 기능', () => {
 
     const eventList = within(screen.getByTestId('event-list'));
     expect(eventList.getByText('새 회의')).toBeInTheDocument();
-    expect(eventList.getByText('2025-10-15')).toBeInTheDocument();
+    expect(eventList.getAllByText('2025-10-15')[0]).toBeInTheDocument();
     expect(eventList.getByText('14:00 - 15:00')).toBeInTheDocument();
     expect(eventList.getByText('프로젝트 진행 상황 논의')).toBeInTheDocument();
     expect(eventList.getByText('회의실 A')).toBeInTheDocument();
-    expect(eventList.getByText('카테고리: 업무')).toBeInTheDocument();
+    expect(eventList.getAllByText('카테고리: 업무')[0]).toBeInTheDocument();
   });
 
   it('기존 일정의 세부 정보를 수정하고 변경사항이 정확히 반영된다', async () => {
@@ -101,17 +101,21 @@ describe('일정 CRUD 및 기본 기능', () => {
   });
 
   it('일정을 삭제하고 더 이상 조회되지 않는지 확인한다', async () => {
-    setupMockHandlerDeletion();
+    // events.json의 기본 이벤트 사용
+    server.use(...setupMockHandlerDeletion());
 
     const { user } = setup(<App />);
     const eventList = within(screen.getByTestId('event-list'));
-    expect(await eventList.findByText('삭제할 이벤트')).toBeInTheDocument();
+    
+    // events.json의 "기존 회의" 대기
+    expect(await eventList.findByText('기존 회의')).toBeInTheDocument();
 
     // 삭제 버튼 클릭
     const allDeleteButton = await screen.findAllByLabelText('Delete event');
     await user.click(allDeleteButton[0]);
 
-    expect(eventList.queryByText('삭제할 이벤트')).not.toBeInTheDocument();
+    // 삭제 확인
+    expect(eventList.queryByText('기존 회의')).not.toBeInTheDocument();
   });
 });
 
@@ -305,14 +309,44 @@ describe('일정 충돌', () => {
   });
 
   it('기존 일정의 시간을 수정하여 충돌이 발생하면 경고가 노출된다', async () => {
-    setupMockHandlerUpdating();
+    // 2개의 이벤트 생성: 하나는 기존 회의, 하나는 추가할 회의
+    const events: Event[] = [
+      {
+        id: '1',
+        title: '기존 회의',
+        date: '2025-10-15',
+        startTime: '09:00',
+        endTime: '10:00',
+        description: '기존 팀 미팅',
+        location: '회의실 B',
+        category: '업무',
+        repeat: { type: 'none', interval: 1 },
+        notificationTime: 10,
+      },
+      {
+        id: '2',
+        title: '점심 회의',
+        date: '2025-10-15',
+        startTime: '12:00',
+        endTime: '13:00',
+        description: '점심 미팅',
+        location: '회의실 A',
+        category: '업무',
+        repeat: { type: 'none', interval: 1 },
+        notificationTime: 10,
+      },
+    ];
+
+    server.use(...setupMockHandlerUpdating(events));
 
     const { user } = setup(<App />);
 
-    const editButton = (await screen.findAllByLabelText('Edit event'))[1];
-    await user.click(editButton);
+    // "점심 회의" 이벤트 수정 버튼 클릭
+    await screen.findAllByText('점심 회의');
+    const editButtons = await screen.findAllByLabelText('Edit event');
+    await user.click(editButtons[1]); // 두 번째 이벤트 (점심 회의)
 
-    // 시간 수정하여 다른 일정과 충돌 발생
+    // 시간 수정하여 "기존 회의"와 충돌 발생
     await user.clear(screen.getByLabelText('시작 시간'));
     await user.type(screen.getByLabelText('시작 시간'), '08:30');
     await user.clear(screen.getByLabelText('종료 시간'));
