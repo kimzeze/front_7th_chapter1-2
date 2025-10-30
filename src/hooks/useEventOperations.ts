@@ -22,6 +22,66 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     }
   };
 
+  /**
+   * 저장 완료 후 공통 처리
+   * @param message 스낵바 메시지
+   */
+  const handleSaveSuccess = async (message: string) => {
+    await fetchEvents();
+    onSave?.();
+    enqueueSnackbar(message, { variant: 'success' });
+  };
+
+  /**
+   * 반복 이벤트 저장 처리
+   * @param eventData 이벤트 폼 데이터
+   */
+  const saveRepeatingEvent = async (eventData: EventForm) => {
+    const recurringEvents = generateRecurringEvents(eventData);
+
+    // 빈 배열인 경우 (예: 종료일이 시작일보다 이전)
+    if (recurringEvents.length === 0) {
+      await handleSaveSuccess('일정이 추가되었습니다.');
+      return;
+    }
+
+    // 모든 이벤트를 순차적으로 저장
+    for (let i = 0; i < recurringEvents.length; i++) {
+      const event = recurringEvents[i];
+
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(event),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to save event ${i + 1}`);
+      }
+    }
+
+    // 모든 저장 완료 후
+    await handleSaveSuccess('일정이 추가되었습니다.');
+  };
+
+  /**
+   * 단일 이벤트 저장
+   * @param eventData 이벤트 데이터
+   */
+  const saveSingleEvent = async (eventData: Event | EventForm) => {
+    const response = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save event');
+    }
+
+    await handleSaveSuccess('일정이 추가되었습니다.');
+  };
+
   const saveEvent = async (eventData: Event | EventForm) => {
     try {
       if (editing) {
@@ -36,72 +96,17 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
           throw new Error('Failed to save event');
         }
 
-        await fetchEvents();
-        onSave?.();
-        enqueueSnackbar('일정이 수정되었습니다.', {
-          variant: 'success',
-        });
+        await handleSaveSuccess('일정이 수정되었습니다.');
       } else {
         // 신규 생성 모드
-        // repeat.type !== 'none'인 경우 반복 생성 로직 적용
         const isRepeating = (eventData as EventForm).repeat?.type !== 'none';
 
         if (isRepeating) {
           // 반복 이벤트 처리
-          console.log('Repeat event detected, generating recurring events...');
-          const recurringEvents = generateRecurringEvents(eventData as EventForm);
-          console.log(`Generated ${recurringEvents.length} recurring events`);
-
-          // 빈 배열인 경우 (예: 종료일이 시작일보다 이전)
-          if (recurringEvents.length === 0) {
-            await fetchEvents();
-            onSave?.();
-            enqueueSnackbar('일정이 추가되었습니다.', {
-              variant: 'success',
-            });
-            return;
-          }
-
-          // 모든 이벤트를 순차적으로 저장
-          for (let i = 0; i < recurringEvents.length; i++) {
-            const event = recurringEvents[i];
-            console.log(`Saving event ${i + 1}/${recurringEvents.length}:`, event.date);
-
-            const response = await fetch('/api/events', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(event),
-            });
-
-            if (!response.ok) {
-              throw new Error(`Failed to save event ${i + 1}`);
-            }
-          }
-
-          // 모든 저장 완료 후
-          await fetchEvents();
-          onSave?.();
-          enqueueSnackbar('일정이 추가되었습니다.', {
-            variant: 'success',
-          });
+          await saveRepeatingEvent(eventData as EventForm);
         } else {
           // 단일 이벤트 저장 (기존 로직)
-          console.log('Single event, saving...');
-          const response = await fetch('/api/events', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(eventData),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to save event');
-          }
-
-          await fetchEvents();
-          onSave?.();
-          enqueueSnackbar('일정이 추가되었습니다.', {
-            variant: 'success',
-          });
+          await saveSingleEvent(eventData);
         }
       }
     } catch (error) {
