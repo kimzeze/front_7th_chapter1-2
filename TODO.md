@@ -230,6 +230,7 @@
 - ✅ Phase 1 완료: 명세 작성 (docs/specs/010-repeat-icon-week-month-view.md)
 - ✅ Phase 2 완료: 테스트 설계 (docs/specs/010-test-design.md)
 - ✅ Phase 3 완료: RED/GREEN - 기능 구현
+
   - Repeat 아이콘 import 추가
   - renderWeekView()에 반복 아이콘 조건 추가
   - renderMonthView()에 반복 아이콘 조건 추가
