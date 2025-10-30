@@ -58,7 +58,7 @@ const saveSchedule = async (
 
 describe('일정 CRUD 및 기본 기능', () => {
   it('입력한 새로운 일정 정보에 맞춰 모든 필드가 이벤트 리스트에 정확히 저장된다.', async () => {
-    setupMockHandlerCreation();
+    server.use(...setupMockHandlerCreation());
 
     const { user } = setup(<App />);
 
@@ -82,9 +82,9 @@ describe('일정 CRUD 및 기본 기능', () => {
   });
 
   it('기존 일정의 세부 정보를 수정하고 변경사항이 정확히 반영된다', async () => {
+    server.use(...setupMockHandlerUpdating());
+    
     const { user } = setup(<App />);
-
-    setupMockHandlerUpdating();
 
     await user.click(await screen.findByLabelText('Edit event'));
 
@@ -106,7 +106,7 @@ describe('일정 CRUD 및 기본 기능', () => {
 
     const { user } = setup(<App />);
     const eventList = within(screen.getByTestId('event-list'));
-    
+
     // events.json의 "기존 회의" 대기
     expect(await eventList.findByText('기존 회의')).toBeInTheDocument();
 
@@ -135,7 +135,7 @@ describe('일정 뷰', () => {
   });
 
   it('주별 뷰 선택 후 해당 일자에 일정이 존재한다면 해당 일정이 정확히 표시된다', async () => {
-    setupMockHandlerCreation();
+    server.use(...setupMockHandlerCreation());
 
     const { user } = setup(<App />);
     await saveSchedule(user, {
@@ -168,7 +168,7 @@ describe('일정 뷰', () => {
   });
 
   it('월별 뷰에 일정이 정확히 표시되는지 확인한다', async () => {
-    setupMockHandlerCreation();
+    server.use(...setupMockHandlerCreation());
 
     const { user } = setup(<App />);
     await saveSchedule(user, {
