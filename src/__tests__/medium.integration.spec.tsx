@@ -430,3 +430,91 @@ describe('반복 설정 UI', () => {
     expect(endDateInput).toHaveValue('2025-12-31');
   });
 });
+
+describe('반복 종료일 Validation', () => {
+  it('종료일이 시작일보다 이전이면 에러 메시지를 표시한다', async () => {
+    // Given
+    const { user } = setup(<App />);
+    await screen.findByText('일정 로딩 완료!');
+
+    // 시작일 입력
+    const dateInput = screen.getByLabelText('날짜');
+    await user.type(dateInput, '2025-01-15');
+
+    // 반복 일정 체크
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    await user.click(repeatCheckbox);
+
+    // When: 시작일보다 이전 날짜 입력
+    const endDateInput = await screen.findByLabelText('반복 종료일');
+    await user.type(endDateInput, '2025-01-10');
+
+    // Then: 에러 메시지 표시
+    expect(await screen.findByText('종료일은 시작일 이후여야 합니다.')).toBeInTheDocument();
+  });
+
+  it('종료일이 2025-12-31을 초과하면 에러 메시지를 표시한다', async () => {
+    // Given
+    const { user } = setup(<App />);
+    await screen.findByText('일정 로딩 완료!');
+
+    // 시작일 입력
+    const dateInput = screen.getByLabelText('날짜');
+    await user.type(dateInput, '2025-01-01');
+
+    // 반복 일정 체크
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    await user.click(repeatCheckbox);
+
+    // When: MAX_DATE 초과 날짜 입력
+    const endDateInput = await screen.findByLabelText('반복 종료일');
+    await user.type(endDateInput, '2026-01-01');
+
+    // Then: 에러 메시지 표시
+    expect(await screen.findByText('종료일은 2025-12-31 이하여야 합니다.')).toBeInTheDocument();
+  });
+
+  it('유효한 종료일을 입력하면 에러 메시지가 표시되지 않는다', async () => {
+    // Given
+    const { user } = setup(<App />);
+    await screen.findByText('일정 로딩 완료!');
+
+    // 시작일 입력
+    const dateInput = screen.getByLabelText('날짜');
+    await user.type(dateInput, '2025-01-01');
+
+    // 반복 일정 체크
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    await user.click(repeatCheckbox);
+
+    // When: 유효한 날짜 입력
+    const endDateInput = await screen.findByLabelText('반복 종료일');
+    await user.type(endDateInput, '2025-12-31');
+
+    // Then: 에러 메시지 없음
+    expect(screen.queryByText('종료일은 시작일 이후여야 합니다.')).not.toBeInTheDocument();
+    expect(screen.queryByText('종료일은 2025-12-31 이하여야 합니다.')).not.toBeInTheDocument();
+  });
+
+  it('종료일이 빈 값이면 에러 메시지가 표시되지 않는다', async () => {
+    // Given
+    const { user } = setup(<App />);
+    await screen.findByText('일정 로딩 완료!');
+
+    // 시작일 입력
+    const dateInput = screen.getByLabelText('날짜');
+    await user.type(dateInput, '2025-01-01');
+
+    // 반복 일정 체크
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    await user.click(repeatCheckbox);
+
+    // When: 종료일을 입력하지 않음 (빈 값)
+    const endDateInput = await screen.findByLabelText('반복 종료일');
+    // 아무것도 입력하지 않음
+
+    // Then: 에러 메시지 없음
+    expect(screen.queryByText('종료일은 시작일 이후여야 합니다.')).not.toBeInTheDocument();
+    expect(screen.queryByText('종료일은 2025-12-31 이하여야 합니다.')).not.toBeInTheDocument();
+  });
+});
