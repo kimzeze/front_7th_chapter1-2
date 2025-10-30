@@ -67,12 +67,12 @@
 
 ### 저장 로직 수정
 
-- [ ] 008: saveEvent에 반복 생성 로직 통합
-
+- [x] 008: saveEvent에 반복 생성 로직 통합
   - 복잡도: 3/5
   - 예상: 1-2시간
   - 파일: `src/hooks/useEventOperations.ts`
   - 설명: repeat.type !== 'none'이면 generateRecurringEvents() 호출하여 여러 이벤트 생성
+  - ✅ 완료: 2025-10-30
 
 - [ ] 009: repeatParentId 생성 및 할당
   - 복잡도: 1/5
@@ -173,6 +173,28 @@
   - TC-008: 빈 배열 (FAIL - generateRecurringEvents 미호출)
   - 커밋: "test: saveEvent 반복 생성 로직 테스트 추가 (RED)"
 
+### 2025-10-30 (작업 008 완료!)
+
+- 🟢 Phase 4 완료: GREEN - 기능 구현
+  - saveEvent 함수에 반복 생성 로직 통합
+  - repeat.type !== 'none' 시 generateRecurringEvents() 호출
+  - 여러 이벤트를 순차적으로 API에 저장
+  - 모든 테스트 통과 (161/161 ✅)
+  - 커밋: "feat: saveEvent에 반복 생성 로직 통합 (GREEN)"
+
+- 🔵 Phase 5 완료: REFACTOR - 리팩토링
+  - 중복 코드 제거 (handleSaveSuccess 헬퍼 함수)
+  - 복잡한 로직을 3개 함수로 분리:
+    - handleSaveSuccess: 저장 완료 후 공통 처리
+    - saveRepeatingEvent: 반복 이벤트 저장
+    - saveSingleEvent: 단일 이벤트 저장
+  - debug log 제거
+  - 코드 가독성 개선
+  - 모든 테스트 여전히 통과 (161/161 ✅)
+  - 커밋: "refactor: saveEvent 함수 리팩토링 - 중복 제거 및 함수 분리 (REFACTOR)"
+
+- ✅ 작업 008 완료! TDD 사이클 완성 (RED → GREEN → REFACTOR)
+
 ### 다음 작업
 
 - [🔄] 인간 검토 대기
@@ -182,10 +204,10 @@
 
 ## 📊 통계
 
-- **전체**: 0/17
-- **완료**: 0 ✅
+- **전체**: 1/17
+- **완료**: 1 ✅
 - **진행중**: 0 🔄
-- **대기**: 17 ⏳
+- **대기**: 16 ⏳
 
 ---
 
