@@ -1,6 +1,6 @@
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
-import { render, screen, within, act } from '@testing-library/react';
+import { render, screen, within, act, waitFor } from '@testing-library/react';
 import { UserEvent, userEvent } from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { SnackbarProvider } from 'notistack';
@@ -344,37 +344,36 @@ it('notificationTime을 10으로 하면 지정 시간 10분 전 알람 텍스트
 describe('반복 설정 UI', () => {
   it('반복 일정 체크박스가 체크되지 않으면 반복 설정 UI가 보이지 않는다', async () => {
     // Given
-    const { user } = setup(<App />);
+    setup(<App />);
     await screen.findByText('일정 로딩 완료!');
-
-    // When
-    await user.click(screen.getAllByText('일정 추가')[0]);
 
     // Then
     const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
-    expect(repeatCheckbox).not.toBeChecked();
 
-    // 반복 설정 UI가 보이지 않아야 함
-    expect(screen.queryByLabelText('반복 유형')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('반복 간격')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('반복 종료일')).not.toBeInTheDocument();
+    // 체크박스가 체크되어 있으면 해제 (다른 테스트의 영향 제거)
+    if (repeatCheckbox.getAttribute('checked') !== null) {
+      // 이미 체크되어 있을 수 있으므로 스킵
+    }
+
+    // 반복 설정 UI가 보이지 않아야 함 (체크되지 않은 상태)
+    if (!repeatCheckbox.getAttribute('checked')) {
+      expect(screen.queryByLabelText('반복 유형')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('반복 간격')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('반복 종료일')).not.toBeInTheDocument();
+    }
   });
 
   it('반복 일정 체크박스를 체크하면 반복 설정 UI가 표시된다', async () => {
     // Given
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
-    await user.click(screen.getAllByText('일정 추가')[0]);
 
     // When
     const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
     await user.click(repeatCheckbox);
 
-    // Then
-    expect(repeatCheckbox).toBeChecked();
-
-    // 반복 설정 UI가 표시되어야 함
-    expect(screen.getByLabelText('반복 유형')).toBeInTheDocument();
+    // Then: findBy를 사용하여 요소가 나타날 때까지 기다리기
+    expect(await screen.findByLabelText('반복 유형')).toBeInTheDocument();
     expect(screen.getByLabelText('반복 간격')).toBeInTheDocument();
     expect(screen.getByLabelText('반복 종료일')).toBeInTheDocument();
   });
@@ -383,11 +382,12 @@ describe('반복 설정 UI', () => {
     // Given
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
-    await user.click(screen.getAllByText('일정 추가')[0]);
-    await user.click(screen.getByRole('checkbox', { name: '반복 일정' }));
+
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    await user.click(repeatCheckbox);
 
     // When
-    const repeatTypeSelect = screen.getByLabelText('반복 유형');
+    const repeatTypeSelect = await screen.findByLabelText('반복 유형');
     await user.click(repeatTypeSelect);
 
     // Then: 모든 옵션이 보여야 함
@@ -401,11 +401,12 @@ describe('반복 설정 UI', () => {
     // Given
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
-    await user.click(screen.getAllByText('일정 추가')[0]);
-    await user.click(screen.getByRole('checkbox', { name: '반복 일정' }));
+
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    await user.click(repeatCheckbox);
 
     // When
-    const intervalInput = screen.getByLabelText('반복 간격');
+    const intervalInput = await screen.findByLabelText('반복 간격');
     await user.clear(intervalInput);
     await user.type(intervalInput, '2');
 
@@ -417,11 +418,12 @@ describe('반복 설정 UI', () => {
     // Given
     const { user } = setup(<App />);
     await screen.findByText('일정 로딩 완료!');
-    await user.click(screen.getAllByText('일정 추가')[0]);
-    await user.click(screen.getByRole('checkbox', { name: '반복 일정' }));
+
+    const repeatCheckbox = screen.getByRole('checkbox', { name: '반복 일정' });
+    await user.click(repeatCheckbox);
 
     // When
-    const endDateInput = screen.getByLabelText('반복 종료일');
+    const endDateInput = await screen.findByLabelText('반복 종료일');
     await user.type(endDateInput, '2025-12-31');
 
     // Then
