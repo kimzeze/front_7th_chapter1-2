@@ -1072,9 +1072,7 @@ describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
       server.use(...setupMockHandlerDeletion(mockEvents));
 
       // Act: deleteOption을 'all'로 설정
-      const { result } = renderHook(() =>
-        useEventOperations(true, undefined, undefined, 'all')
-      );
+      const { result } = renderHook(() => useEventOperations(true, undefined, undefined, 'all'));
 
       await act(() => Promise.resolve(null));
 
@@ -1149,9 +1147,7 @@ describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
       server.use(...setupMockHandlerDeletion(mockEvents));
 
       // TC-002: deleteOption = 'all'
-      const { result } = renderHook(() =>
-        useEventOperations(true, undefined, undefined, 'all')
-      );
+      const { result } = renderHook(() => useEventOperations(true, undefined, undefined, 'all'));
 
       await act(() => Promise.resolve(null));
 
@@ -1190,9 +1186,7 @@ describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
       server.use(...setupMockHandlerDeletion(mockEvents));
 
       // TC-003: deleteOption = 'all' (에러 케이스)
-      const { result } = renderHook(() =>
-        useEventOperations(true, undefined, undefined, 'all')
-      );
+      const { result } = renderHook(() => useEventOperations(true, undefined, undefined, 'all'));
 
       await act(() => Promise.resolve(null));
 
@@ -1234,9 +1228,7 @@ describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
       server.use(...setupMockHandlerDeletion(mockEvents));
 
       // TC-004: deleteOption = 'all'
-      const { result } = renderHook(() =>
-        useEventOperations(true, undefined, undefined, 'all')
-      );
+      const { result } = renderHook(() => useEventOperations(true, undefined, undefined, 'all'));
 
       await act(() => Promise.resolve(null));
 
@@ -1282,9 +1274,7 @@ describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
       );
 
       // TC-005: deleteOption = 'all'
-      const { result } = renderHook(() =>
-        useEventOperations(true, undefined, undefined, 'all')
-      );
+      const { result } = renderHook(() => useEventOperations(true, undefined, undefined, 'all'));
 
       await act(() => Promise.resolve(null));
 
@@ -1349,9 +1339,7 @@ describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
       server.use(...setupMockHandlerDeletion(mockEvents));
 
       // TC-006: deleteOption = 'single'
-      const { result } = renderHook(() =>
-        useEventOperations(true, undefined, undefined, 'single')
-      );
+      const { result } = renderHook(() => useEventOperations(true, undefined, undefined, 'single'));
 
       await act(() => Promise.resolve(null));
 
@@ -1388,9 +1376,7 @@ describe('작업 017: 전체 삭제 로직 (deleteOption === "all")', () => {
       server.use(...setupMockHandlerDeletion(mockEvents));
 
       // TC-007: deleteOption = null (기본값)
-      const { result } = renderHook(() =>
-        useEventOperations(true, undefined, undefined, null)
-      );
+      const { result } = renderHook(() => useEventOperations(true, undefined, undefined, null));
 
       await act(() => Promise.resolve(null));
 

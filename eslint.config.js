@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import typescriptPlugin from '@typescript-eslint/eslint-plugin';
 import typescriptParser from '@typescript-eslint/parser';
 import prettierConfig from 'eslint-config-prettier';
+import cypressPlugin from 'eslint-plugin-cypress';
 import importPlugin from 'eslint-plugin-import';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactPlugin from 'eslint-plugin-react';
@@ -123,6 +124,31 @@ export default [
         beforeAll: 'readonly',
         afterAll: 'readonly',
         vi: 'readonly',
+      },
+    },
+  },
+  pnpm lint:eslint
+  
+  // Cypress test files configuration
+  {
+    files: ['**/cypress/**/*.{js,jsx,ts,tsx}', '**/*.cy.{js,jsx,ts,tsx}'],
+    plugins: {
+      cypress: cypressPlugin,
+    },
+    rules: {
+      ...cypressPlugin.configs.recommended.rules,
+    },
+    languageOptions: {
+      globals: {
+        cy: 'readonly',
+        Cypress: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        before: 'readonly',
+        after: 'readonly',
       },
     },
   },
