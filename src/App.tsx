@@ -45,6 +45,7 @@ import {
   getWeeksAtMonth,
 } from './utils/dateUtils';
 import { findOverlappingEvents } from './utils/eventOverlap';
+import { MAX_DATE } from './utils/recurringEventUtils';
 import { getTimeErrorMessage } from './utils/timeValidation';
 
 const categories = ['업무', '개인', '가족', '기타'];
@@ -486,7 +487,7 @@ function App() {
                     onChange={handleRepeatEndDateChange}
                     error={Boolean(repeatEndDateError)}
                     helperText={repeatEndDateError}
-                    slotProps={{ htmlInput: { max: '2025-12-31' } }}
+                    slotProps={{ htmlInput: { max: MAX_DATE } }}
                   />
                 </FormControl>
               </Stack>
