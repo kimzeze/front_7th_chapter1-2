@@ -867,12 +867,64 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
   });
 
   describe('에러 처리', () => {
-    // TC-005: API 실패 시 에러 처리
-    it('TC-005: 전체 수정 중 API 실패 시 에러 메시지를 표시한다', async () => {
-      // Mock: API 실패
+    // TC-005: 반복 그룹의 일부 이벤트 실패 시 에러 처리
+    it('TC-005: 반복 그룹의 일부 이벤트 업데이트 실패 시 에러를 표시한다', async () => {
+      // Mock: 같은 repeatParentId를 가진 여러 이벤트 준비
+      const parentId = 'parent-005';
+      const mockEvents: Event[] = [
+        {
+          id: 'recurring-1',
+          title: '주간 회의',
+          date: '2025-11-01',
+          startTime: '10:00',
+          endTime: '11:00',
+          description: '',
+          location: '회의실',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: parentId,
+        },
+        {
+          id: 'recurring-2',
+          title: '주간 회의',
+          date: '2025-11-08',
+          startTime: '10:00',
+          endTime: '11:00',
+          description: '',
+          location: '회의실',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: parentId,
+        },
+        {
+          id: 'recurring-3',
+          title: '주간 회의',
+          date: '2025-11-15',
+          startTime: '10:00',
+          endTime: '11:00',
+          description: '',
+          location: '회의실',
+          category: '업무',
+          repeat: { type: 'weekly', interval: 1 },
+          notificationTime: 10,
+          repeatParentId: parentId,
+        },
+      ];
+
+      // Mock: GET은 성공, PUT은 두 번째 이벤트에서만 실패
       server.use(
-        http.put('/api/events/:id', () => {
-          return new HttpResponse(null, { status: 500 });
+        http.get('/api/events', () => {
+          return HttpResponse.json({ events: mockEvents });
+        }),
+        http.put('/api/events/:id', ({ params }) => {
+          const { id } = params;
+          // recurring-2만 실패
+          if (id === 'recurring-2') {
+            return new HttpResponse(null, { status: 500 });
+          }
+          return HttpResponse.json({ id, title: '수정됨' });
         })
       );
 
@@ -880,27 +932,26 @@ describe('작업 014: 전체 수정 로직 (editOption === "all")', () => {
 
       await act(() => Promise.resolve(null));
 
-      // 초기 이벤트(id: '1')를 사용하여 테스트
-      // repeatParentId가 없어도 API 실패는 발생함
+      // 전체 수정 시도
       const eventData: Event = {
-        id: '1',
-        title: '회의',
-        date: '2025-10-15',
-        startTime: '10:00',
-        endTime: '11:00',
-        description: '',
-        location: '회의실 B',
+        id: 'recurring-1',
+        title: '주간 회의 (수정됨)',
+        date: '2025-11-01',
+        startTime: '14:00',
+        endTime: '15:00',
+        description: '시간 변경',
+        location: '회의실 A',
         category: '업무',
-        repeat: { type: 'none', interval: 1 },
+        repeat: { type: 'weekly', interval: 1 },
         notificationTime: 10,
-        // repeatParentId 없음 (기존 단일 이벤트 수정 시 에러)
+        repeatParentId: parentId,
       };
 
       await act(async () => {
         await result.current.saveEvent(eventData, 'all');
       });
 
-      // 에러 메시지 확인 (마지막 호출 확인)
+      // 에러 메시지 확인 (부분 실패 시)
       expect(enqueueSnackbarFn).toHaveBeenLastCalledWith('일정 저장 실패', {
         variant: 'error',
       });
