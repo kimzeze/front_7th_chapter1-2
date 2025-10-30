@@ -452,3 +452,309 @@ describe('반복 이벤트 저장 (작업 008)', () => {
     });
   });
 });
+
+// 작업 013: 단일 수정 로직 구현
+describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('반복 이벤트 단일 수정', () => {
+    // TC-001: editOption === 'single'일 때 repeat.type을 'none'으로 변경
+    it('TC-001: editOption === "single"일 때 repeat.type을 "none"으로 변경하고 repeatParentId를 제거한다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const repeatEvent: Event = {
+        id: '1',
+        title: '회의 (수정됨)',
+        date: '2025-01-15',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '팀 미팅',
+        location: '회의실 A',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1, endDate: '2025-12-31' },
+        notificationTime: 10,
+        repeatParentId: 'parent-123',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(repeatEvent, 'single');
+      });
+
+      // API 호출 확인
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/events/1',
+        expect.objectContaining({
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+        })
+      );
+
+      // Body 검증: repeat.type === 'none', repeatParentId 없음
+      const callArgs = (global.fetch as any).mock.calls[1]; // 0: GET, 1: PUT
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.repeat.type).toBe('none');
+      expect(body.repeatParentId).toBeUndefined();
+      expect(body).not.toHaveProperty('repeatParentId');
+
+      // 스낵바 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+    });
+
+    // TC-002: repeatParentId가 제거됨
+    it('TC-002: 단일 수정 시 API 호출 body에 repeatParentId가 포함되지 않는다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const repeatEvent: Event = {
+        id: '2',
+        title: '스탠드업',
+        date: '2025-02-01',
+        startTime: '09:00',
+        endTime: '09:30',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'daily', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-abc',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(repeatEvent, 'single');
+      });
+
+      // Body에 repeatParentId 없음 확인
+      const callArgs = (global.fetch as any).mock.calls[1];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body).not.toHaveProperty('repeatParentId');
+      expect(Object.keys(body)).not.toContain('repeatParentId');
+    });
+  });
+
+  describe('단일 이벤트 수정 (repeatParentId 없음)', () => {
+    // TC-003: repeatParentId 없는 경우 기존 로직 유지
+    it('TC-003: repeatParentId가 없는 단일 이벤트는 기존 로직대로 수정된다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const singleEvent: Event = {
+        id: '3',
+        title: '개인 일정',
+        date: '2025-03-01',
+        startTime: '14:00',
+        endTime: '15:00',
+        description: '',
+        location: '',
+        category: '개인',
+        repeat: { type: 'none', interval: 1 },
+        notificationTime: 10,
+        // repeatParentId 없음
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(singleEvent, 'single');
+      });
+
+      // Body 검증: repeat.type 변경 안 함
+      const callArgs = (global.fetch as any).mock.calls[1];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.repeat.type).toBe('none'); // 변경되지 않음
+      expect(body).not.toHaveProperty('repeatParentId');
+
+      // 스낵바 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
+    });
+  });
+
+  describe('editOption이 null 또는 undefined인 경우', () => {
+    // TC-004: editOption이 null이면 기존 로직 수행
+    it('TC-004: editOption이 undefined이면 repeat.type과 repeatParentId를 변경하지 않는다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const repeatEvent: Event = {
+        id: '4',
+        title: '회의',
+        date: '2025-04-01',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'monthly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-xyz',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(repeatEvent); // editOption 전달 안 함
+      });
+
+      // Body 검증: 변경되지 않음
+      const callArgs = (global.fetch as any).mock.calls[1];
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.repeat.type).toBe('monthly'); // 변경 안 함
+      expect(body.repeatParentId).toBe('parent-xyz'); // 유지됨
+    });
+  });
+
+  describe('editOption === "all" (작업 014 대비)', () => {
+    // TC-005: editOption === 'all'이면 현재는 기존 로직 수행
+    it('TC-005: editOption === "all"일 때 현재는 단일 이벤트만 수정된다 (작업 014 대비)', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const repeatEvent: Event = {
+        id: '5',
+        title: '회의',
+        date: '2025-05-01',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-aaa',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(repeatEvent, 'all');
+      });
+
+      // 현재는 단일 이벤트만 수정 (작업 014에서 전체 수정 구현 예정)
+      expect(global.fetch).toHaveBeenCalledTimes(2); // GET + PUT
+      const callArgs = (global.fetch as any).mock.calls[1];
+      expect(callArgs[0]).toBe('/api/events/5');
+      expect(callArgs[1].method).toBe('PUT');
+
+      // Body 검증: 변경되지 않음 (작업 014에서 구현 예정)
+      const body = JSON.parse(callArgs[1].body);
+      expect(body.repeat.type).toBe('weekly');
+      expect(body.repeatParentId).toBe('parent-aaa');
+    });
+  });
+
+  describe('에러 처리', () => {
+    // TC-006: API 실패 시 에러 처리
+    it('TC-006: 단일 수정 중 API 실패 시 에러 메시지를 표시한다', async () => {
+      // Mock: API 실패
+      server.use(
+        http.put('/api/events/:id', () => {
+          return new HttpResponse(null, { status: 500 });
+        })
+      );
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      const repeatEvent: Event = {
+        id: '6',
+        title: '회의',
+        date: '2025-06-01',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-bbb',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(repeatEvent, 'single');
+      });
+
+      // 에러 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정 저장 실패', {
+        variant: 'error',
+      });
+    });
+  });
+
+  describe('통합 시나리오', () => {
+    // TC-007: 반복 이벤트 단일 수정 후 다시 수정
+    it('TC-007: 단일 수정으로 분리된 이벤트를 다시 수정할 때 정상 동작한다', async () => {
+      setupMockHandlerUpdating();
+
+      const { result } = renderHook(() => useEventOperations(true));
+
+      await act(() => Promise.resolve(null));
+
+      // 첫 번째 수정: 단일 수정으로 분리
+      const repeatEvent: Event = {
+        id: '7',
+        title: '회의',
+        date: '2025-07-01',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-ccc',
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(repeatEvent, 'single');
+      });
+
+      // 첫 번째 수정 확인
+      const firstCallArgs = (global.fetch as any).mock.calls[1];
+      const firstBody = JSON.parse(firstCallArgs[1].body);
+      expect(firstBody.repeat.type).toBe('none');
+      expect(firstBody.repeatParentId).toBeUndefined();
+
+      // 두 번째 수정: 일반 단일 이벤트로 수정
+      const separatedEvent: Event = {
+        id: '7',
+        title: '회의 (재수정)',
+        date: '2025-07-01',
+        startTime: '11:00',
+        endTime: '12:00',
+        description: '수정됨',
+        location: '',
+        category: '업무',
+        repeat: { type: 'none', interval: 1 },
+        notificationTime: 10,
+        // repeatParentId 없음
+      };
+
+      await act(async () => {
+        await result.current.saveEvent(separatedEvent); // editOption 없음
+      });
+
+      // 두 번째 수정 확인: 정상적으로 수정됨
+      const secondCallArgs = (global.fetch as any).mock.calls[3]; // GET, PUT, GET, PUT
+      const secondBody = JSON.parse(secondCallArgs[1].body);
+      expect(secondBody.title).toBe('회의 (재수정)');
+      expect(secondBody.repeat.type).toBe('none');
+      expect(secondBody).not.toHaveProperty('repeatParentId');
+    });
+  });
+});

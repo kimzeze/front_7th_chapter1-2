@@ -24,19 +24,21 @@ const [editOption, setEditOption] = useState<'single' | 'all' | null>(null);
 ```
 
 **문제점**:
+
 - 다이얼로그에서 "이 일정만" 또는 "전체 반복" 선택 시 `editOption`이 설정됨
 - 하지만 이 값이 **실제로 사용되지 않음**
 - `editEvent()` 함수는 이 정보를 받지 못함
 
 **영향**:
+
 - 현재 린트 경고 발생: `'editOption' is assigned a value but never used`
 - 사용자가 어떤 옵션을 선택했는지 추적할 수 없음
 
 **해결 방안**:
+
 1. **Option 1 (권장)**: 작업 013/014에서 `editOption`을 사용하도록 구현
    - `editEvent(event, editOption)` 형태로 파라미터 전달
    - `useEventOperations`에서 옵션에 따라 다르게 처리
-   
 2. **Option 2**: 현재는 주석 처리
    ```typescript
    // TODO: 작업 013/014에서 사용 예정
@@ -59,11 +61,13 @@ const [editOption, setEditOption] = useState<'single' | 'all' | null>(null);
 ## 🎯 다음 작업
 
 **작업 013: 단일 수정 로직 구현**
+
 - `editOption === 'single'`일 때 처리
 - 선택한 이벤트 1개만 수정
 - `editOption` 상태 활용 예정
 
 **작업 014: 전체 수정 로직 구현**
+
 - `editOption === 'all'`일 때 처리
 - 같은 `repeatParentId`를 가진 모든 이벤트 수정
 - `editOption` 상태 활용 예정
@@ -75,6 +79,7 @@ const [editOption, setEditOption] = useState<'single' | 'all' | null>(null);
 **승인 권장**: ✅ 예
 
 **사유**:
+
 - UI는 완벽하게 구현됨
 - `editOption` 미사용은 의도된 것 (다음 작업에서 사용)
 - 린트 경고는 있지만 기능적 문제 없음
@@ -85,6 +90,7 @@ const [editOption, setEditOption] = useState<'single' | 'all' | null>(null);
 ## 📌 커밋 메시지 제안
 
 현재 상태 그대로 커밋 유지:
+
 ```
 feat: 반복 일정 수정 다이얼로그 UI 추가 (RED/GREEN)
 
@@ -94,4 +100,3 @@ feat: 반복 일정 수정 다이얼로그 UI 추가 (RED/GREEN)
 
 Note: editOption은 린트 경고가 있지만 다음 작업에서 사용됨
 ```
-
