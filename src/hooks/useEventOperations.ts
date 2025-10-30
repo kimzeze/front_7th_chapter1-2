@@ -96,6 +96,21 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   };
 
   /**
+   * 단일 이벤트 수정 (PUT 요청만 수행, 성공 처리는 별도)
+   */
+  const updateEventAPI = async (eventData: Event | EventForm) => {
+    const response = await fetch(`/api/events/${(eventData as Event).id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(eventData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to save event');
+    }
+  };
+
+  /**
    * 같은 repeatParentId를 가진 모든 이벤트를 일괄 수정
    * 각 이벤트의 날짜는 유지하고, 나머지 필드는 수정된 값으로 변경
    */
@@ -119,15 +134,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
         notificationTime: eventData.notificationTime,
       };
 
-      const response = await fetch(`/api/events/${relatedEvent.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedEvent),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to update event ${relatedEvent.id}`);
-      }
+      await updateEventAPI(updatedEvent as Event);
     }
 
     await handleSaveSuccess('일정이 수정되었습니다.');
@@ -139,16 +146,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
         // 단일 수정
         if (editOption === 'single' && (eventData as Event).repeatParentId) {
           const dataToSave = convertToSingleEvent(eventData);
-          const response = await fetch(`/api/events/${(eventData as Event).id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dataToSave),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to save event');
-          }
-
+          await updateEventAPI(dataToSave);
           await handleSaveSuccess('일정이 수정되었습니다.');
         }
         // 전체 수정
@@ -157,16 +155,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
         }
         // 일반 수정 (기존)
         else {
-          const response = await fetch(`/api/events/${(eventData as Event).id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(eventData),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to save event');
-          }
-
+          await updateEventAPI(eventData);
           await handleSaveSuccess('일정이 수정되었습니다.');
         }
       } else {
