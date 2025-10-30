@@ -7,16 +7,24 @@ import { Event } from '../types';
  * MSW 핸들러
  *
  * @description
- * chapter1-1 패턴 적용:
+ * 테스트 격리 패턴:
  * - let mockEvents로 런타임 변경 가능
- * - server.use()로 덮어쓰기 가능
- * - afterEach의 server.resetHandlers()로 초기화
+ * - resetMockEvents()로 각 테스트마다 초기화
+ * - server.use()로 테스트별 핸들러 덮어쓰기 가능
  */
 
 let mockEvents: Event[] = [...(initialEvents as Event[])];
 
 const findEventById = (id: string) => mockEvents.findIndex((e) => e.id === id);
 const generateId = () => String(Date.now());
+
+/**
+ * 테스트 격리를 위한 mockEvents 초기화 함수
+ * afterEach에서 호출하여 각 테스트가 독립적으로 실행되도록 보장
+ */
+export const resetMockEvents = () => {
+  mockEvents = [...(initialEvents as Event[])];
+};
 
 export const handlers = [
   http.get('/api/events', () => {
