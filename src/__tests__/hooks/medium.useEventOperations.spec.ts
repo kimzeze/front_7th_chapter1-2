@@ -8,7 +8,8 @@ import {
 } from '../../__mocks__/handlersUtils.ts';
 import { useEventOperations } from '../../hooks/useEventOperations.ts';
 import { server } from '../../setupTests.ts';
-import { Event } from '../../types.ts';
+import { Event, EventForm } from '../../types.ts';
+import * as recurringEventUtils from '../../utils/recurringEventUtils.ts';
 
 const enqueueSnackbarFn = vi.fn();
 
@@ -19,6 +20,15 @@ vi.mock('notistack', async () => {
     useSnackbar: () => ({
       enqueueSnackbar: enqueueSnackbarFn,
     }),
+  };
+});
+
+// Mock generateRecurringEvents
+vi.mock('../../utils/recurringEventUtils.ts', async () => {
+  const actual = await vi.importActual('../../utils/recurringEventUtils.ts');
+  return {
+    ...actual,
+    generateRecurringEvents: vi.fn(),
   };
 });
 
@@ -170,4 +180,288 @@ it("네트워크 오류 시 '일정 삭제 실패'라는 텍스트가 노출되�
   expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정 삭제 실패', { variant: 'error' });
 
   expect(result.current.events).toHaveLength(1);
+});
+
+describe('반복 이벤트 저장 (작업 008)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    enqueueSnackbarFn.mockClear();
+  });
+
+  // TC-001: 단일 이벤트 저장 (기존 로직 유지)
+  it('반복 없는 단일 이벤트는 API에 1개만 저장된다', async () => {
+    setupMockHandlerCreation();
+
+    const { result } = renderHook(() => useEventOperations(false));
+
+    await act(() => Promise.resolve(null));
+
+    const singleEvent: EventForm = {
+      title: '회의',
+      date: '2025-01-15',
+      startTime: '10:00',
+      endTime: '11:00',
+      description: '',
+      location: '',
+      category: '업무',
+      repeat: { type: 'none', interval: 1 },
+      notificationTime: 10,
+    };
+
+    await act(async () => {
+      await result.current.saveEvent(singleEvent);
+    });
+
+    // generateRecurringEvents 호출 확인
+    expect(recurringEventUtils.generateRecurringEvents).not.toHaveBeenCalled();
+    // 스낵바 메시지 확인
+    expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 추가되었습니다.', {
+      variant: 'success',
+    });
+  });
+
+  // TC-002: 매주 반복 이벤트 저장 (핵심)
+  it('매주 반복 설정된 이벤트는 여러 이벤트가 생성되어 순차적으로 저장된다', async () => {
+    setupMockHandlerCreation();
+
+    // Mock 반환값 설정: 4개의 이벤트
+    const mockEvents: Event[] = [
+      {
+        id: 'uuid-1',
+        title: '스탠드업',
+        date: '2025-01-15',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+        notificationTime: 10,
+        repeatParentId: 'parent-1',
+      },
+      {
+        id: 'uuid-2',
+        title: '스탠드업',
+        date: '2025-01-22',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+        notificationTime: 10,
+        repeatParentId: 'parent-1',
+      },
+      {
+        id: 'uuid-3',
+        title: '스탠드업',
+        date: '2025-01-29',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+        notificationTime: 10,
+        repeatParentId: 'parent-1',
+      },
+      {
+        id: 'uuid-4',
+        title: '스탠드업',
+        date: '2025-02-05',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+        notificationTime: 10,
+        repeatParentId: 'parent-1',
+      },
+    ];
+
+    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(
+      mockEvents
+    );
+
+    const { result } = renderHook(() => useEventOperations(false));
+
+    await act(() => Promise.resolve(null));
+
+    const weeklyEvent: EventForm = {
+      title: '스탠드업',
+      date: '2025-01-15',
+      startTime: '10:00',
+      endTime: '11:00',
+      description: '',
+      location: '',
+      category: '업무',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+      notificationTime: 10,
+    };
+
+    await act(async () => {
+      await result.current.saveEvent(weeklyEvent);
+    });
+
+    // generateRecurringEvents 호출 확인
+    expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledWith(
+      weeklyEvent
+    );
+    expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledTimes(1);
+    // 스낵바 메시지 확인
+    expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 추가되었습니다.', {
+      variant: 'success',
+    });
+  });
+
+  // TC-007: 수정 모드에서 반복 생성 로직 미적용
+  it('수정 모드에서는 반복 생성 로직이 미적용되고 단일 이벤트만 수정된다', async () => {
+    setupMockHandlerUpdating();
+
+    const { result } = renderHook(() => useEventOperations(true));
+
+    await act(() => Promise.resolve(null));
+
+    const updatedEvent: Event = {
+      id: '1',
+      title: '회의 (수정됨)',
+      date: '2025-10-15',
+      startTime: '09:00',
+      endTime: '11:00',
+      description: '기존 팀 미팅',
+      location: '회의실 B',
+      category: '업무',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-12-31' },
+      notificationTime: 10,
+    };
+
+    await act(async () => {
+      await result.current.saveEvent(updatedEvent);
+    });
+
+    // generateRecurringEvents 호출 안 됨
+    expect(recurringEventUtils.generateRecurringEvents).not.toHaveBeenCalled();
+    // 스낵바 메시지 확인
+    expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+      variant: 'success',
+    });
+  });
+
+  // TC-005: 부분 실패 처리
+  it('반복 이벤트 저장 중 부분 실패 시 에러를 처리한다', async () => {
+    const mockEvents: Event[] = [
+      {
+        id: 'uuid-1',
+        title: '회의',
+        date: '2025-01-15',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-1',
+      },
+      {
+        id: 'uuid-2',
+        title: '회의',
+        date: '2025-01-22',
+        startTime: '10:00',
+        endTime: '11:00',
+        description: '',
+        location: '',
+        category: '업무',
+        repeat: { type: 'weekly', interval: 1 },
+        notificationTime: 10,
+        repeatParentId: 'parent-1',
+      },
+    ];
+
+    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(
+      mockEvents
+    );
+
+    // 2번째 POST 호출에서 실패 시뮬레이션
+    let postCallCount = 0;
+    server.use(
+      http.post('/api/events', () => {
+        postCallCount++;
+        if (postCallCount === 2) {
+          return new HttpResponse(null, { status: 500 });
+        }
+        return new HttpResponse(
+          JSON.stringify({ success: true }),
+          { status: 200 }
+        );
+      })
+    );
+
+    const { result } = renderHook(() => useEventOperations(false));
+
+    await act(() => Promise.resolve(null));
+
+    const weeklyEvent: EventForm = {
+      title: '회의',
+      date: '2025-01-15',
+      startTime: '10:00',
+      endTime: '11:00',
+      description: '',
+      location: '',
+      category: '업무',
+      repeat: { type: 'weekly', interval: 1 },
+      notificationTime: 10,
+    };
+
+    await act(async () => {
+      await result.current.saveEvent(weeklyEvent);
+    });
+
+    // 에러 메시지 확인
+    expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정 저장 실패', {
+      variant: 'error',
+    });
+
+    server.resetHandlers();
+  });
+
+  // TC-008: 빈 배열 반환 (반복 종료일이 시작일보다 이전)
+  it('반복 생성 결과가 빈 배열이면 API 호출을 하지 않는다', async () => {
+    // Mock: 빈 배열 반환
+    vi.mocked(recurringEventUtils.generateRecurringEvents).mockReturnValueOnce(
+      []
+    );
+
+    setupMockHandlerCreation();
+
+    const { result } = renderHook(() => useEventOperations(false));
+
+    await act(() => Promise.resolve(null));
+
+    const invalidEvent: EventForm = {
+      title: '회의',
+      date: '2025-01-15',
+      startTime: '10:00',
+      endTime: '11:00',
+      description: '',
+      location: '',
+      category: '업무',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-01-08' },
+      notificationTime: 10,
+    };
+
+    await act(async () => {
+      await result.current.saveEvent(invalidEvent);
+    });
+
+    // generateRecurringEvents 호출됨
+    expect(recurringEventUtils.generateRecurringEvents).toHaveBeenCalledWith(
+      invalidEvent
+    );
+    // 스낵바 메시지 확인
+    expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 추가되었습니다.', {
+      variant: 'success',
+    });
+  });
 });
