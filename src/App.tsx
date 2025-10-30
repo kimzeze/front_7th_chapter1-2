@@ -69,6 +69,17 @@ const notificationOptions = [
 ];
 
 function App() {
+  // 작업 012-014: 반복 일정 수정/삭제 옵션 (hooks 호출 전에 선언)
+  const [isOverlapDialogOpen, setIsOverlapDialogOpen] = useState(false);
+  const [overlappingEvents, setOverlappingEvents] = useState<Event[]>([]);
+  const [editRepeatDialogOpen, setEditRepeatDialogOpen] = useState(false);
+  const [editingEventForRepeat, setEditingEventForRepeat] = useState<Event | null>(null);
+  const [editOption, setEditOption] = useState<'single' | 'all' | null>(null);
+  const [deleteRepeatDialogOpen, setDeleteRepeatDialogOpen] = useState(false);
+  const [deletingEventForRepeat, setDeletingEventForRepeat] = useState<Event | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [deleteOption, setDeleteOption] = useState<'single' | 'all' | null>(null); // 작업 016/017에서 사용 예정
+
   const {
     title,
     setTitle,
@@ -103,22 +114,15 @@ function App() {
     editEvent,
   } = useEventForm();
 
-  const { events, saveEvent, deleteEvent } = useEventOperations(Boolean(editingEvent), () =>
-    setEditingEvent(null)
+  const { events, saveEvent, deleteEvent } = useEventOperations(
+    Boolean(editingEvent),
+    () => setEditingEvent(null),
+    editOption // 작업 013/014: editOption 전달
   );
 
   const { notifications, notifiedEvents, setNotifications } = useNotifications(events);
   const { view, setView, currentDate, holidays, navigate } = useCalendarView();
   const { searchTerm, filteredEvents, setSearchTerm } = useSearch(events, currentDate, view);
-
-  const [isOverlapDialogOpen, setIsOverlapDialogOpen] = useState(false);
-  const [overlappingEvents, setOverlappingEvents] = useState<Event[]>([]);
-  const [editRepeatDialogOpen, setEditRepeatDialogOpen] = useState(false);
-  const [editingEventForRepeat, setEditingEventForRepeat] = useState<Event | null>(null);
-  const [editOption, setEditOption] = useState<'single' | 'all' | null>(null); // 작업 013/014에서 사용
-  const [deleteRepeatDialogOpen, setDeleteRepeatDialogOpen] = useState(false);
-  const [deletingEventForRepeat, setDeletingEventForRepeat] = useState<Event | null>(null);
-  const [deleteOption, setDeleteOption] = useState<'single' | 'all' | null>(null); // 작업 016/017에서 사용
 
   const { enqueueSnackbar } = useSnackbar();
 
@@ -714,7 +718,7 @@ function App() {
             onClick={() => {
               if (editingEventForRepeat) {
                 setEditOption('single');
-                editEvent(editingEventForRepeat);
+                editEvent(editingEventForRepeat); // 폼에 이벤트 로드
                 setEditRepeatDialogOpen(false);
               }
             }}
@@ -725,7 +729,7 @@ function App() {
             onClick={() => {
               if (editingEventForRepeat) {
                 setEditOption('all');
-                editEvent(editingEventForRepeat);
+                editEvent(editingEventForRepeat); // 폼에 이벤트 로드
                 setEditRepeatDialogOpen(false);
               }
             }}

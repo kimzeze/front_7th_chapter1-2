@@ -4,7 +4,11 @@ import { useEffect, useState } from 'react';
 import { Event, EventForm } from '../types';
 import { generateRecurringEvents } from '../utils/recurringEventUtils';
 
-export const useEventOperations = (editing: boolean, onSave?: () => void) => {
+export const useEventOperations = (
+  editing: boolean,
+  onSave?: () => void,
+  editOption?: 'single' | 'all' | null
+) => {
   const [events, setEvents] = useState<Event[]>([]);
   const { enqueueSnackbar } = useSnackbar();
 
@@ -140,17 +144,20 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     await handleSaveSuccess('일정이 수정되었습니다.');
   };
 
-  const saveEvent = async (eventData: Event | EventForm, editOption?: 'single' | 'all') => {
+  const saveEvent = async (eventData: Event | EventForm, localEditOption?: 'single' | 'all') => {
     try {
+      // hook에서 전달된 editOption 또는 함수 매개변수로 전달된 editOption 사용
+      const effectiveEditOption = localEditOption || editOption;
+
       if (editing) {
         // 단일 수정
-        if (editOption === 'single' && (eventData as Event).repeatParentId) {
+        if (effectiveEditOption === 'single' && (eventData as Event).repeatParentId) {
           const dataToSave = convertToSingleEvent(eventData);
           await updateEventAPI(dataToSave);
           await handleSaveSuccess('일정이 수정되었습니다.');
         }
         // 전체 수정
-        else if (editOption === 'all' && (eventData as Event).repeatParentId) {
+        else if (effectiveEditOption === 'all' && (eventData as Event).repeatParentId) {
           await updateAllRelatedEvents(eventData as Event);
         }
         // 일반 수정 (기존)
