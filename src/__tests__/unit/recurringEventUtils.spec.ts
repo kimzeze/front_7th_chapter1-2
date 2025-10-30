@@ -679,3 +679,200 @@ describe('getNextOccurrence - yearly 윤년 엣지 케이스', () => {
     expect(next).toEqual(new Date('2025-03-15'));
   });
 });
+
+// 작업 009: repeatParentId 생성 및 할당 검증
+describe('작업 009: repeatParentId 생성 및 할당 (작업 009)', () => {
+  const createBaseEvent = (overrides: Partial<EventForm> = {}): EventForm => ({
+    title: '테스트 이벤트',
+    date: '2025-01-01',
+    startTime: '10:00',
+    endTime: '11:00',
+    description: '테스트 설명',
+    location: '테스트 장소',
+    category: '업무',
+    repeat: {
+      type: 'none',
+      interval: 1,
+    },
+    notificationTime: 10,
+    ...overrides,
+  });
+
+  // ID 형식 검증 헬퍼 함수
+  const isValidUUID = (id: string): boolean => {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  };
+
+  const isValidTimestampId = (id: string): boolean => {
+    return /^\d+-[a-z0-9]+$/.test(id);
+  };
+
+  const isValidRepeatParentId = (id: string): boolean => {
+    return isValidUUID(id) || isValidTimestampId(id);
+  };
+
+  // TC-001: 4개 반복 이벤트 - 모두 동일한 repeatParentId
+  it('TC-001: 4개 반복 이벤트는 모두 동일한 repeatParentId를 가짐', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    expect(events).toHaveLength(4);
+    const parentId = events[0].repeatParentId;
+    expect(parentId).toBeDefined();
+    expect(events[1].repeatParentId).toBe(parentId);
+    expect(events[2].repeatParentId).toBe(parentId);
+    expect(events[3].repeatParentId).toBe(parentId);
+  });
+
+  // TC-002: 3개 반복 이벤트 (매월) - 모두 동일한 repeatParentId
+  it('TC-002: 3개 반복 이벤트(매월)는 모두 동일한 repeatParentId를 가짐', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'monthly', interval: 1, endDate: '2025-03-15' },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    expect(events).toHaveLength(3);
+    const parentId = events[0].repeatParentId;
+    expect(parentId).toBeDefined();
+    expect(events.every((e) => e.repeatParentId === parentId)).toBe(true);
+  });
+
+  // TC-003: 31개 반복 이벤트 (매일) - 첫 이벤트와 마지막 이벤트의 repeatParentId가 동일
+  it('TC-003: 31개 반복 이벤트(매일)의 첫 이벤트와 마지막 이벤트의 repeatParentId가 동일', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-01',
+      repeat: { type: 'daily', interval: 1, endDate: '2025-01-31' },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    expect(events).toHaveLength(31);
+    expect(events[0].repeatParentId).toBe(events[30].repeatParentId);
+  });
+
+  // TC-004: 단일 이벤트 - repeatParentId 없음
+  it('TC-004: 단일 이벤트(repeat.type === none)는 repeatParentId가 없음', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'none', interval: 1 },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    expect(events).toHaveLength(1);
+    expect(events[0].repeatParentId).toBeUndefined();
+  });
+
+  // TC-005: 2개 반복 그룹 - 서로 다른 repeatParentId
+  it('TC-005: 2개 반복 그룹은 각각 다른 repeatParentId를 가짐', () => {
+    // Arrange
+    const eventForm1 = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+    });
+
+    const eventForm2 = createBaseEvent({
+      date: '2025-03-15',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-04-05' },
+    });
+
+    // Act
+    const group1Events = generateRecurringEvents(eventForm1);
+    const group2Events = generateRecurringEvents(eventForm2);
+
+    // Assert
+    expect(group1Events[0].repeatParentId).not.toBe(group2Events[0].repeatParentId);
+  });
+
+  // TC-006: 각 이벤트의 id는 고유하지만 repeatParentId는 동일
+  it('TC-006: 각 이벤트의 id는 고유하지만 repeatParentId는 동일', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    // 각 id는 고유
+    const ids = events.map((e) => e.id);
+    const uniqueIds = new Set(ids);
+    expect(uniqueIds.size).toBe(4);
+
+    // 모든 repeatParentId는 동일
+    const parentIds = events.map((e) => e.repeatParentId);
+    const uniqueParentIds = new Set(parentIds);
+    expect(uniqueParentIds.size).toBe(1);
+  });
+
+  // TC-007: repeatParentId 형식 검증 (UUID 또는 Timestamp)
+  it('TC-007: repeatParentId는 유효한 UUID 또는 Timestamp 형식', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-02-05' },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    events.forEach((event) => {
+      if (event.repeatParentId) {
+        expect(isValidRepeatParentId(event.repeatParentId)).toBe(true);
+      }
+    });
+  });
+
+  // TC-008: 1개만 생성되는 반복 (종료일 = 시작일)
+  it('TC-008: 시작일과 종료일이 같으면 1개 이벤트 생성, repeatParentId 할당', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-01-15' },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    expect(events).toHaveLength(1);
+    expect(events[0].repeatParentId).toBeDefined();
+    expect(isValidRepeatParentId(events[0].repeatParentId!)).toBe(true);
+  });
+
+  // TC-009: 빈 배열 반환 (종료일이 시작일보다 이전)
+  it('TC-009: 종료일이 시작일보다 이전이면 빈 배열 반환', () => {
+    // Arrange
+    const eventForm = createBaseEvent({
+      date: '2025-01-15',
+      repeat: { type: 'weekly', interval: 1, endDate: '2025-01-08' },
+    });
+
+    // Act
+    const events = generateRecurringEvents(eventForm);
+
+    // Assert
+    expect(events).toHaveLength(0);
+  });
+});
