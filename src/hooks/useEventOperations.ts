@@ -7,7 +7,8 @@ import { generateRecurringEvents } from '../utils/recurringEventUtils';
 export const useEventOperations = (
   editing: boolean,
   onSave?: () => void,
-  editOption?: 'single' | 'all' | null
+  editOption?: 'single' | 'all' | null,
+  deleteOption?: 'single' | 'all' | null // 작업 016: 전달받음, 작업 017에서 실제 사용 예정
 ) => {
   const [events, setEvents] = useState<Event[]>([]);
   const { enqueueSnackbar } = useSnackbar();
@@ -185,6 +186,12 @@ export const useEventOperations = (
 
   const deleteEvent = async (id: string) => {
     try {
+      // 작업 016: 단일 삭제 (기존 로직 그대로 사용)
+      // deleteOption === 'single' 또는 null일 때: 단일 이벤트 삭제
+      // 작업 017에서 deleteOption === 'all'일 때: 전체 반복 이벤트 삭제 추가 예정
+      // TODO(Task 017): deleteOption을 활용하여 전체 삭제 구현
+      void deleteOption; // 작업 017에서 사용 예정
+
       const response = await fetch(`/api/events/${id}`, { method: 'DELETE' });
 
       if (!response.ok) {

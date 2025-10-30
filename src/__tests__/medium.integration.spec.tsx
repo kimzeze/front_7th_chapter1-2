@@ -83,7 +83,7 @@ describe('일정 CRUD 및 기본 기능', () => {
 
   it('기존 일정의 세부 정보를 수정하고 변경사항이 정확히 반영된다', async () => {
     server.use(...setupMockHandlerUpdating());
-    
+
     const { user } = setup(<App />);
 
     await user.click(await screen.findByLabelText('Edit event'));

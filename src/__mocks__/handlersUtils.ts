@@ -19,11 +19,11 @@ const notFoundResponse = () => HttpResponse.json({ error: 'Event not found' }, {
 
 /**
  * 테스트 격리를 위한 Mock 이벤트 리셋
- * 
+ *
  * @description
  * handlersUtils의 함수들은 클로저로 독립적인 events 배열을 관리하므로,
  * 각 테스트에서 server.use()로 새 핸들러를 설정하면 자동으로 격리됩니다.
- * 
+ *
  * afterEach에서 server.resetHandlers()만 호출하면 충분합니다.
  */
 export const resetMockEvents = () => {

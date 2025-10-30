@@ -77,8 +77,7 @@ function App() {
   const [editOption, setEditOption] = useState<'single' | 'all' | null>(null);
   const [deleteRepeatDialogOpen, setDeleteRepeatDialogOpen] = useState(false);
   const [deletingEventForRepeat, setDeletingEventForRepeat] = useState<Event | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [deleteOption, setDeleteOption] = useState<'single' | 'all' | null>(null); // 작업 016/017에서 사용 예정
+  const [deleteOption, setDeleteOption] = useState<'single' | 'all' | null>(null); // 작업 016/017: useEventOperations에 전달
 
   const {
     title,
@@ -117,7 +116,8 @@ function App() {
   const { events, saveEvent, deleteEvent } = useEventOperations(
     Boolean(editingEvent),
     () => setEditingEvent(null),
-    editOption // 작업 013/014: editOption 전달
+    editOption, // 작업 013/014: editOption 전달
+    deleteOption // 작업 016: deleteOption 전달
   );
 
   const { notifications, notifiedEvents, setNotifications } = useNotifications(events);

@@ -260,6 +260,7 @@
   - Dialog 컴포넌트 추가 ("이 일정만"/"전체 반복"/"취소")
   - 커밋: "feat: 반복 일정 삭제 확인 다이얼로그 UI 구현 (GREEN)"
 - ✅ Phase 5 완료: REFACTOR - MSW 테스트 격리 개선
+
   - handlers.ts와 handlersUtils.ts 역할 명확화
   - resetMockEvents() 함수 추가
   - server.use(...setupMockHandlerXxx()) 패턴 적용
