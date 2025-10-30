@@ -632,14 +632,14 @@ describe('반복 일정 삭제 (작업 015)', () => {
       expect(screen.getByText('해당 일정만 삭제하시겠어요?')).toBeInTheDocument();
 
       // 버튼 3개 존재 확인
-      expect(screen.getByRole('button', { name: /이 일정만/ })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /전체 반복/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^예$/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^아니오$/ })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /취소/ })).toBeInTheDocument();
     });
   });
 
   describe('다이얼로그 버튼 동작', () => {
-    it('TC-003: "이 일정만" 버튼 클릭 시 다이얼로그가 닫히고 단일 삭제된다', async () => {
+    it('TC-003: "예" 버튼 클릭 시 다이얼로그가 닫히고 단일 삭제된다', async () => {
       // Arrange: 반복 이벤트 (Factory 패턴)
       const recurringEvent = createRecurringEvent('parent-weekly', {
         id: 'rec-1',
@@ -656,8 +656,8 @@ describe('반복 일정 삭제 (작업 015)', () => {
       const deleteButton = screen.getByLabelText('Delete event');
       await user.click(deleteButton);
 
-      // Act: "이 일정만" 버튼 클릭
-      const singleButton = screen.getByRole('button', { name: /이 일정만/ });
+      // Act: "예" 버튼 클릭
+      const singleButton = screen.getByRole('button', { name: /^예$/ });
       await user.click(singleButton);
 
       // Assert: 다이얼로그 닫힘 (비동기 처리 대기)
@@ -666,7 +666,7 @@ describe('반복 일정 삭제 (작업 015)', () => {
       });
     });
 
-    it('TC-004: "전체 반복" 버튼 클릭 시 다이얼로그가 닫히고 전체 삭제된다', async () => {
+    it('TC-004: "아니오" 버튼 클릭 시 다이얼로그가 닫히고 전체 삭제된다', async () => {
       // Arrange: 같은 repeatParentId를 가진 여러 이벤트 (Factory 패턴)
       const recurringEvents = [
         createRecurringEvent('parent-weekly', { id: 'rec-1', date: '2025-10-08' }),
@@ -683,8 +683,8 @@ describe('반복 일정 삭제 (작업 015)', () => {
       const deleteButtons = screen.getAllByLabelText('Delete event');
       await user.click(deleteButtons[0]);
 
-      // Act: "전체 반복" 버튼 클릭
-      const allButton = screen.getByRole('button', { name: /전체 반복/ });
+      // Act: "아니오" 버튼 클릭
+      const allButton = screen.getByRole('button', { name: /^아니오$/ });
       await user.click(allButton);
 
       // Assert: 다이얼로그 닫힘 (비동기 처리 대기)
@@ -770,22 +770,22 @@ describe('반복 일정 삭제 (작업 015)', () => {
 
       await screen.findAllByText('주간 회의');
 
-      // Act: 첫 번째 이벤트 삭제 → "이 일정만"
+      // Act: 첫 번째 이벤트 삭제 → "예"
       let deleteButtons = screen.getAllByLabelText('Delete event');
       await user.click(deleteButtons[0]);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: /이 일정만/ }));
+      await user.click(screen.getByRole('button', { name: /^예$/ }));
 
       // 다이얼로그 닫힘 확인
       await act(async () => {
         await new Promise((resolve) => setTimeout(resolve, 100));
       });
 
-      // Act: 두 번째 이벤트 삭제 → "이 일정만"
+      // Act: 두 번째 이벤트 삭제 → "예"
       deleteButtons = screen.getAllByLabelText('Delete event');
       await user.click(deleteButtons[0]);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
-      await user.click(screen.getByRole('button', { name: /이 일정만/ }));
+      await user.click(screen.getByRole('button', { name: /^예$/ }));
 
       // Assert: 두 번 모두 다이얼로그 표시되었음 (위에서 확인)
     });

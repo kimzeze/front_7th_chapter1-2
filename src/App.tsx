@@ -723,7 +723,7 @@ function App() {
               }
             }}
           >
-            이 일정만
+            예
           </Button>
           <Button
             onClick={() => {
@@ -735,7 +735,7 @@ function App() {
             }}
             variant="contained"
           >
-            전체 반복
+            아니오
           </Button>
           <Button
             onClick={() => {
@@ -772,7 +772,7 @@ function App() {
               }
             }}
           >
-            이 일정만
+            예
           </Button>
           <Button
             onClick={() => {
@@ -784,7 +784,7 @@ function App() {
             }}
             variant="contained"
           >
-            전체 반복
+            아니오
           </Button>
           <Button
             onClick={() => {
