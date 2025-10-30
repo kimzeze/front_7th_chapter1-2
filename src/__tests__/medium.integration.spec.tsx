@@ -439,6 +439,7 @@ describe('반복 종료일 Validation', () => {
 
     // 시작일 입력
     const dateInput = screen.getByLabelText('날짜');
+    await user.clear(dateInput);
     await user.type(dateInput, '2025-01-15');
 
     // 반복 일정 체크
@@ -460,6 +461,7 @@ describe('반복 종료일 Validation', () => {
 
     // 시작일 입력
     const dateInput = screen.getByLabelText('날짜');
+    await user.clear(dateInput);
     await user.type(dateInput, '2025-01-01');
 
     // 반복 일정 체크
@@ -481,6 +483,7 @@ describe('반복 종료일 Validation', () => {
 
     // 시작일 입력
     const dateInput = screen.getByLabelText('날짜');
+    await user.clear(dateInput);
     await user.type(dateInput, '2025-01-01');
 
     // 반복 일정 체크
@@ -503,6 +506,7 @@ describe('반복 종료일 Validation', () => {
 
     // 시작일 입력
     const dateInput = screen.getByLabelText('날짜');
+    await user.clear(dateInput);
     await user.type(dateInput, '2025-01-01');
 
     // 반복 일정 체크
@@ -510,7 +514,7 @@ describe('반복 종료일 Validation', () => {
     await user.click(repeatCheckbox);
 
     // When: 종료일을 입력하지 않음 (빈 값)
-    const endDateInput = await screen.findByLabelText('반복 종료일');
+    await screen.findByLabelText('반복 종료일');
     // 아무것도 입력하지 않음
 
     // Then: 에러 메시지 없음

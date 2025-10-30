@@ -80,15 +80,16 @@ function App() {
     repeatInterval,
     setRepeatInterval,
     repeatEndDate,
-    setRepeatEndDate,
     notificationTime,
     setNotificationTime,
     startTimeError,
     endTimeError,
+    repeatEndDateError,
     editingEvent,
     setEditingEvent,
     handleStartTimeChange,
     handleEndTimeChange,
+    handleRepeatEndDateChange,
     resetForm,
     editEvent,
   } = useEventForm();
@@ -415,10 +416,10 @@ function App() {
                   checked={isRepeating}
                   onChange={(e) => {
                     const checked = e.target.checked;
-                    setIsRepeating(checked);
                     if (checked && repeatType === 'none') {
                       setRepeatType('daily');
                     }
+                    setIsRepeating(checked);
                   }}
                 />
               }
@@ -446,12 +447,16 @@ function App() {
           {isRepeating && (
             <Stack spacing={2}>
               <FormControl fullWidth>
-                <FormLabel>반복 유형</FormLabel>
+                <FormLabel htmlFor="repeat-type">반복 유형</FormLabel>
                 <Select
+                  id="repeat-type"
                   size="small"
                   value={repeatType}
                   onChange={(e) => setRepeatType(e.target.value as RepeatType)}
                 >
+                  <MenuItem value="none" style={{ display: 'none' }}>
+                    없음
+                  </MenuItem>
                   <MenuItem value="daily">매일</MenuItem>
                   <MenuItem value="weekly">매주</MenuItem>
                   <MenuItem value="monthly">매월</MenuItem>
@@ -460,8 +465,9 @@ function App() {
               </FormControl>
               <Stack direction="row" spacing={2}>
                 <FormControl fullWidth>
-                  <FormLabel>반복 간격</FormLabel>
+                  <FormLabel htmlFor="repeat-interval">반복 간격</FormLabel>
                   <TextField
+                    id="repeat-interval"
                     size="small"
                     type="number"
                     value={repeatInterval}
@@ -470,12 +476,15 @@ function App() {
                   />
                 </FormControl>
                 <FormControl fullWidth>
-                  <FormLabel>반복 종료일</FormLabel>
+                  <FormLabel htmlFor="repeat-end-date">반복 종료일</FormLabel>
                   <TextField
+                    id="repeat-end-date"
                     size="small"
                     type="date"
                     value={repeatEndDate}
-                    onChange={(e) => setRepeatEndDate(e.target.value)}
+                    onChange={handleRepeatEndDateChange}
+                    error={Boolean(repeatEndDateError)}
+                    helperText={repeatEndDateError}
                   />
                 </FormControl>
               </Stack>
