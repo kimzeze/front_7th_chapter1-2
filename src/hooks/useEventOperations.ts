@@ -184,22 +184,58 @@ export const useEventOperations = (
     }
   };
 
+  /**
+   * 같은 repeatParentId를 가진 모든 이벤트를 일괄 삭제
+   * @param id 삭제할 이벤트 ID
+   */
+  const deleteAllRelatedEvents = async (id: string) => {
+    // 1. 타겟 이벤트 찾기
+    const targetEvent = events.find((e) => e.id === id);
+    if (!targetEvent || !targetEvent.repeatParentId) {
+      throw new Error('Target event not found or not a repeating event');
+    }
+
+    const { repeatParentId } = targetEvent;
+
+    // 2. 같은 반복 그룹의 모든 이벤트 찾기
+    const relatedEvents = events.filter((event) => event.repeatParentId === repeatParentId);
+
+    // 3. 모든 이벤트 병렬 삭제 (Promise.all)
+    await Promise.all(
+      relatedEvents.map(async (relatedEvent) => {
+        const response = await fetch(`/api/events/${relatedEvent.id}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to delete event ${relatedEvent.id}`);
+        }
+      })
+    );
+
+    // 4. 성공 후 UI 업데이트
+    await fetchEvents();
+    enqueueSnackbar('일정이 삭제되었습니다.', { variant: 'info' });
+  };
+
   const deleteEvent = async (id: string) => {
     try {
-      // 작업 016: 단일 삭제 (기존 로직 그대로 사용)
-      // deleteOption === 'single' 또는 null일 때: 단일 이벤트 삭제
-      // 작업 017에서 deleteOption === 'all'일 때: 전체 반복 이벤트 삭제 추가 예정
-      // TODO(Task 017): deleteOption을 활용하여 전체 삭제 구현
-      void deleteOption; // 작업 017에서 사용 예정
+      // 작업 017: deleteOption 확인
+      if (deleteOption === 'all') {
+        // 전체 삭제 로직
+        await deleteAllRelatedEvents(id);
+      } else {
+        // 작업 016: 단일 삭제 (기존 로직)
+        // deleteOption === 'single' 또는 null일 때
+        const response = await fetch(`/api/events/${id}`, { method: 'DELETE' });
 
-      const response = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+        if (!response.ok) {
+          throw new Error('Failed to delete event');
+        }
 
-      if (!response.ok) {
-        throw new Error('Failed to delete event');
+        await fetchEvents();
+        enqueueSnackbar('일정이 삭제되었습니다.', { variant: 'info' });
       }
-
-      await fetchEvents();
-      enqueueSnackbar('일정이 삭제되었습니다.', { variant: 'info' });
     } catch (error) {
       console.error('Error deleting event:', error);
       enqueueSnackbar('일정 삭제 실패', { variant: 'error' });
