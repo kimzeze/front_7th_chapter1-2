@@ -486,6 +486,7 @@ function App() {
                     onChange={handleRepeatEndDateChange}
                     error={Boolean(repeatEndDateError)}
                     helperText={repeatEndDateError}
+                    slotProps={{ htmlInput: { max: '2025-12-31' } }}
                   />
                 </FormControl>
               </Stack>
