@@ -447,12 +447,13 @@ function App() {
           {isRepeating && (
             <Stack spacing={2}>
               <FormControl fullWidth>
-                <FormLabel htmlFor="repeat-type">반복 유형</FormLabel>
+                <FormLabel>반복 유형</FormLabel>
                 <Select
                   id="repeat-type"
                   size="small"
                   value={repeatType}
                   onChange={(e) => setRepeatType(e.target.value as RepeatType)}
+                  inputProps={{ 'aria-label': '반복 유형' }}
                 >
                   <MenuItem value="none" style={{ display: 'none' }}>
                     없음
