@@ -82,14 +82,27 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
     await handleSaveSuccess('일정이 추가되었습니다.');
   };
 
-  const saveEvent = async (eventData: Event | EventForm) => {
+  const saveEvent = async (eventData: Event | EventForm, editOption?: 'single' | 'all') => {
     try {
       if (editing) {
-        // 수정 모드: 기존 로직 유지 (반복 생성 로직 미적용)
+        // 수정 모드
+        let dataToSave = eventData;
+
+        // 단일 수정: repeat.type을 'none'으로 변경, repeatParentId 제거
+        if (editOption === 'single' && (eventData as Event).repeatParentId) {
+          const modifiedData: Partial<Event> = {
+            ...eventData,
+            repeat: { ...eventData.repeat, type: 'none' as const },
+          };
+          // repeatParentId 제거
+          delete modifiedData.repeatParentId;
+          dataToSave = modifiedData as Event | EventForm;
+        }
+
         const response = await fetch(`/api/events/${(eventData as Event).id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(eventData),
+          body: JSON.stringify(dataToSave),
         });
 
         if (!response.ok) {

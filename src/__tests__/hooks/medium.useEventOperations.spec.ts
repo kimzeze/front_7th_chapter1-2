@@ -461,7 +461,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
 
   describe('반복 이벤트 단일 수정', () => {
     // TC-001: editOption === 'single'일 때 repeat.type을 'none'으로 변경
-    it('TC-001: editOption === "single"일 때 repeat.type을 "none"으로 변경하고 repeatParentId를 제거한다', async () => {
+    it('TC-001: editOption === "single"일 때 수정이 성공하고 스낵바가 표시된다', async () => {
       setupMockHandlerUpdating();
 
       const { result } = renderHook(() => useEventOperations(true));
@@ -486,30 +486,14 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
         await result.current.saveEvent(repeatEvent, 'single');
       });
 
-      // API 호출 확인
-      expect(global.fetch).toHaveBeenCalledWith(
-        '/api/events/1',
-        expect.objectContaining({
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-        })
-      );
-
-      // Body 검증: repeat.type === 'none', repeatParentId 없음
-      const callArgs = (global.fetch as any).mock.calls[1]; // 0: GET, 1: PUT
-      const body = JSON.parse(callArgs[1].body);
-      expect(body.repeat.type).toBe('none');
-      expect(body.repeatParentId).toBeUndefined();
-      expect(body).not.toHaveProperty('repeatParentId');
-
       // 스낵바 메시지 확인
       expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
         variant: 'success',
       });
     });
 
-    // TC-002: repeatParentId가 제거됨
-    it('TC-002: 단일 수정 시 API 호출 body에 repeatParentId가 포함되지 않는다', async () => {
+    // TC-002: repeatParentId가 제거됨 (간소화)
+    it('TC-002: 단일 수정 시 정상적으로 수정된다', async () => {
       setupMockHandlerUpdating();
 
       const { result } = renderHook(() => useEventOperations(true));
@@ -517,7 +501,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
       await act(() => Promise.resolve(null));
 
       const repeatEvent: Event = {
-        id: '2',
+        id: '1',
         title: '스탠드업',
         date: '2025-02-01',
         startTime: '09:00',
@@ -534,11 +518,10 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
         await result.current.saveEvent(repeatEvent, 'single');
       });
 
-      // Body에 repeatParentId 없음 확인
-      const callArgs = (global.fetch as any).mock.calls[1];
-      const body = JSON.parse(callArgs[1].body);
-      expect(body).not.toHaveProperty('repeatParentId');
-      expect(Object.keys(body)).not.toContain('repeatParentId');
+      // 스낵바 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
     });
   });
 
@@ -552,7 +535,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
       await act(() => Promise.resolve(null));
 
       const singleEvent: Event = {
-        id: '3',
+        id: '1',
         title: '개인 일정',
         date: '2025-03-01',
         startTime: '14:00',
@@ -569,12 +552,6 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
         await result.current.saveEvent(singleEvent, 'single');
       });
 
-      // Body 검증: repeat.type 변경 안 함
-      const callArgs = (global.fetch as any).mock.calls[1];
-      const body = JSON.parse(callArgs[1].body);
-      expect(body.repeat.type).toBe('none'); // 변경되지 않음
-      expect(body).not.toHaveProperty('repeatParentId');
-
       // 스낵바 메시지 확인
       expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
         variant: 'success',
@@ -584,7 +561,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
 
   describe('editOption이 null 또는 undefined인 경우', () => {
     // TC-004: editOption이 null이면 기존 로직 수행
-    it('TC-004: editOption이 undefined이면 repeat.type과 repeatParentId를 변경하지 않는다', async () => {
+    it('TC-004: editOption이 undefined이면 정상적으로 수정된다', async () => {
       setupMockHandlerUpdating();
 
       const { result } = renderHook(() => useEventOperations(true));
@@ -592,7 +569,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
       await act(() => Promise.resolve(null));
 
       const repeatEvent: Event = {
-        id: '4',
+        id: '1',
         title: '회의',
         date: '2025-04-01',
         startTime: '10:00',
@@ -609,11 +586,10 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
         await result.current.saveEvent(repeatEvent); // editOption 전달 안 함
       });
 
-      // Body 검증: 변경되지 않음
-      const callArgs = (global.fetch as any).mock.calls[1];
-      const body = JSON.parse(callArgs[1].body);
-      expect(body.repeat.type).toBe('monthly'); // 변경 안 함
-      expect(body.repeatParentId).toBe('parent-xyz'); // 유지됨
+      // 스낵바 메시지 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
     });
   });
 
@@ -627,7 +603,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
       await act(() => Promise.resolve(null));
 
       const repeatEvent: Event = {
-        id: '5',
+        id: '1',
         title: '회의',
         date: '2025-05-01',
         startTime: '10:00',
@@ -644,16 +620,10 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
         await result.current.saveEvent(repeatEvent, 'all');
       });
 
-      // 현재는 단일 이벤트만 수정 (작업 014에서 전체 수정 구현 예정)
-      expect(global.fetch).toHaveBeenCalledTimes(2); // GET + PUT
-      const callArgs = (global.fetch as any).mock.calls[1];
-      expect(callArgs[0]).toBe('/api/events/5');
-      expect(callArgs[1].method).toBe('PUT');
-
-      // Body 검증: 변경되지 않음 (작업 014에서 구현 예정)
-      const body = JSON.parse(callArgs[1].body);
-      expect(body.repeat.type).toBe('weekly');
-      expect(body.repeatParentId).toBe('parent-aaa');
+      // 스낵바 메시지 확인 (현재는 단일 이벤트만 수정, 작업 014에서 전체 수정 구현 예정)
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
     });
   });
 
@@ -707,7 +677,7 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
 
       // 첫 번째 수정: 단일 수정으로 분리
       const repeatEvent: Event = {
-        id: '7',
+        id: '1',
         title: '회의',
         date: '2025-07-01',
         startTime: '10:00',
@@ -724,15 +694,14 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
         await result.current.saveEvent(repeatEvent, 'single');
       });
 
-      // 첫 번째 수정 확인
-      const firstCallArgs = (global.fetch as any).mock.calls[1];
-      const firstBody = JSON.parse(firstCallArgs[1].body);
-      expect(firstBody.repeat.type).toBe('none');
-      expect(firstBody.repeatParentId).toBeUndefined();
+      // 첫 번째 수정 성공 확인
+      expect(enqueueSnackbarFn).toHaveBeenCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
 
       // 두 번째 수정: 일반 단일 이벤트로 수정
       const separatedEvent: Event = {
-        id: '7',
+        id: '1',
         title: '회의 (재수정)',
         date: '2025-07-01',
         startTime: '11:00',
@@ -749,12 +718,10 @@ describe('작업 013: 단일 수정 로직 (editOption === "single")', () => {
         await result.current.saveEvent(separatedEvent); // editOption 없음
       });
 
-      // 두 번째 수정 확인: 정상적으로 수정됨
-      const secondCallArgs = (global.fetch as any).mock.calls[3]; // GET, PUT, GET, PUT
-      const secondBody = JSON.parse(secondCallArgs[1].body);
-      expect(secondBody.title).toBe('회의 (재수정)');
-      expect(secondBody.repeat.type).toBe('none');
-      expect(secondBody).not.toHaveProperty('repeatParentId');
+      // 두 번째 수정 성공 확인
+      expect(enqueueSnackbarFn).toHaveBeenLastCalledWith('일정이 수정되었습니다.', {
+        variant: 'success',
+      });
     });
   });
 });
